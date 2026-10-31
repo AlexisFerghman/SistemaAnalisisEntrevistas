@@ -10,6 +10,6 @@ __pycache__/
 .DS_Store
 
 # Datos locales de la app
-habits.cli
-samples
+habits-cli/
+samples/
 
