@@ -13,3 +13,9 @@ __pycache__/
 habits-cli/
 samples/
 
+# Variables y dependencias del stack
+.env
+node_modules/
+postgres_data/
+dist/
+

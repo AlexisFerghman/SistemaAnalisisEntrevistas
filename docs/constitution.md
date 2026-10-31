@@ -1,23 +1,42 @@
-# Constitución del Sistema
+# Constitución del prototipo de análisis de entrevistas clínicas
 
-## 1. Declaración de Propósito
-La plataforma es un entorno de software de apoyo a la investigación y práctica profesional enfocado en la transcripción, organización de observaciones y análisis de contenido afectivo/lingüístico sobre entrevistas (clínicas o laborales). El sistema actúa estrictamente como una herramienta auxiliar de organización y análisis computacional.
+## 1. Propósito y alcance
 
-## 2. Principios Fundamentales
+El proyecto es un prototipo experimental para explorar la transcripción y anotación de entrevistas clínicas mediante modelos de IA en la nube. Esta entrega no está destinada a entornos clínicos reales ni a la toma de decisiones profesionales.
 
-### P1. Supervisión Humana Obligatoria (Human-in-the-Loop)
-- **Límite de Autonomía:** El sistema **bajo ninguna circunstancia** emitirá diagnósticos médicos, evaluaciones psiquiátricas ni conclusiones automatizadas sobre la idoneidad de un usuario o paciente.
-- **Responsabilidad Profesional:** La precisión de la transcripción, la interpretación de las emociones detectadas y el registro de observaciones o diagnósticos son de responsabilidad exclusiva del profesional usuario.
+El MVP trabaja únicamente con audios ficticios o sintéticos. No admite datos reales, identificables o sensibles.
 
-### P2. Privacidad y Soberanía de Datos por Diseño
-- **Consentimiento:** La obtención y custodia del consentimiento informado del entrevistado es responsabilidad directa del profesional tratante/reclutador.
-- **Modalidad Aislada (Modo Invitado/Público):** Cuando el sistema opere en entornos de servicio público o con alta restricción de datos, todo el procesamiento (ASR, post-procesamiento y análisis afectivo) se ejecutará **localmente en el equipo del usuario**, garantizando que ningún dato salga del dispositivo local.
-- **Modo Registrado:** Los audios, transcripciones, etiquetas, observaciones y matrices afectivas se almacenarán únicamente para dar continuidad a la sesión del usuario autenticado, pudiendo definirse políticas de purga periódica para archivos multimedia pesados.
+## 2. Principios fundamentales
 
-### P3. Transparencia Algorítmica y Explicabilidad (XAI)
-- **Claridad de Inferencia:** El análisis afectivo debe entregar una distribución de probabilidades emocionales explícita sobre el texto evaluado.
-- **Trazabilidad:** Toda predicción analítica soportada por el modelo avanzado de investigación (modelo de doctorado) debe incluir una capa de explicabilidad que justifique las decisiones del algoritmo mediante la atribución de importancia a nivel de tokens/palabras.
+### P1. Supervisión humana obligatoria
 
-### P4. Calidad del Procesamiento en Cascada
-- **Post-Procesamiento Supervisado:** El uso de modelos LLM/MLM para la corrección de errores básicos de transcripción debe conservar las marcas de tiempo (`timestamps`) originales del ASR.
-- **Inmutabilidad del Ground Truth:** El usuario mantendrá la capacidad de revisar, editar y validar el texto post-procesado antes de consolidar el análisis afectivo final.
+- El sistema no emite diagnósticos, evaluaciones psiquiátricas ni decisiones 	clínicas.
+- La transcripción y las anotaciones generadas o modificadas en el sistema son 	revisadas por el profesional antes de considerarse válidas.
+- Las salidas de la IA se presentan como asistencia experimental, nunca como 	una conclusión profesional.
+
+### P2. Datos sintéticos y límites de privacidad
+
+- El MVP solo permite datos ficticios o sintéticos.
+- El usuario no debe cargar entrevistas reales, nombres, identificadores, 	historias clínicas ni ningún otro dato sensible.
+- El audio se procesa mediante un proveedor cloud de transcripción. La 	selección y configuración concreta del proveedor se definirá en el plan.
+- Esta versión no implementa autenticación, cuentas, roles ni control de acceso multiusuario y no debe considerarse apta para producción.
+
+### P3. Sesión única y eliminación de datos
+
+- El prototipo conserva como máximo una sesión de entrevista.
+- Cuando una nueva sesión se procesa correctamente, la sesión anterior se elimina para evitar el solapamiento de datos.
+- Si la nueva carga, transcripción o persistencia falla, la sesión anterior se conserva.
+- La eliminación de la sesión anterior no requiere historial ni recuperación en esta versión.
+
+### P4. Calidad y trazabilidad de la transcripción
+
+- La transcripción debe conservar marcas de tiempo por palabra y oración.
+- El profesional debe poder revisar y editar el texto y sus marcas de tiempo.
+- Las anotaciones deben permanecer vinculadas al fragmento o timestamp que les dio origen.
+- El audio original no se modifica ni se sustituye por una versión editada.
+
+### P5. Simplicidad del MVP
+
+- El MVP se limita al flujo de carga, transcripción, edición, anotación y exportación.
+- El análisis afectivo, la explicabilidad XAI, el chatbot, la gestión de usuarios y las funciones multiusuario quedan fuera de esta entrega.
+- Ninguna decisión de arquitectura o proveedor cloud se considera aprobada hasta quedar documentada en el plan.

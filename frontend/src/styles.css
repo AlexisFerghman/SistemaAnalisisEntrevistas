@@ -1,0 +1,42 @@
+:root {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #24211f;
+  background: #e7e1d8;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; min-width: 320px; }
+
+.shell {
+  min-height: 100vh;
+  padding: clamp(2rem, 8vw, 7rem);
+  background: radial-gradient(circle at 85% 15%, #f8d7a3 0, transparent 30%), #e7e1d8;
+}
+
+.intro { max-width: 720px; }
+
+.eyebrow {
+  color: #9e4b2f;
+  font: 700 0.8rem/1.2 Arial, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1 { max-width: 9ch; margin: 1rem 0; font-size: clamp(3.2rem, 9vw, 7rem); line-height: 0.92; }
+
+.lede { max-width: 34rem; font-size: 1.25rem; line-height: 1.5; }
+
+.status-panel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 4rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #24211f;
+  font: 600 0.9rem Arial, sans-serif;
+}
+
+.status-dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: #9e4b2f; }
+.status-dot.online { background: #3c7952; }
