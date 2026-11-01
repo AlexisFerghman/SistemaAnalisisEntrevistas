@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: entrevistas
       POSTGRES_PASSWORD: entrevistas_dev
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -14,31 +14,54 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - api_db
 
   api:
     build: ./backend
     environment:
       DATABASE_URL: postgresql+psycopg://entrevistas:entrevistas_dev@db:5432/entrevistas
       CORS_ORIGINS: http://localhost:5173
+      CORS_ORIGIN_REGEX: ^https?://(localhost|127\.0\.0\.1|172\.20\.\d+\.\d+)(:\d+)?$
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - frontend_api
+      - api_db
 
   frontend:
     build: ./frontend
     environment:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_URL: ""
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    networks:
+      - frontend_api
+      - external_conectivity
 
 volumes:
   postgres_data:
+
+networks:
+  frontend_api:
+    internal: true
+  api_db:
+    internal: true
+  external_conectivity:
+    internal: false

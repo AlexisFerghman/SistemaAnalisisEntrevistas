@@ -1,23 +1,28 @@
-- [ ] **T1 — Cerrar decisiones abiertas del MVP** (20 min)
+- [x] **T1 — Cerrar decisiones abiertas del MVP** (20 min)
 	- RF/RNF: RF-001, RF-004, RF-016, RNF-001, RNF-004.
-	- Decidir proveedor cloud, formatos admitidos, límites de tamaño y duración,
-		y formato de exportación.
-	- **Hecho cuando:** las tres dudas abiertas de `spec.md` tienen una decisión
-		documentada y aprobada, sin añadir funcionalidades fuera del MVP.
+	- Decisiones: servicios locales aislados en Docker para el MVP; despliegue en
+		servidor cloud privado reservado para entregas finales; formatos `.mp3` y
+		`.wav`; límite provisional de 120 MB; exportación como JSON en PostgreSQL.
+	- **Hecho cuando:** las decisiones de proveedor, formatos, límite y
+		exportación están documentadas y aprobadas, sin añadir funcionalidades fuera
+		del MVP.
 
-- [ ] **T2 — Definir el contrato de la sesión única** (25 min)
+- [x] **T2 — Definir el contrato de la sesión única** (25 min)
 	- RF/RNF: RF-012, RNF-003.
-	- Formalizar el documento de sesión, sus campos obligatorios, estados de
-		transcripción y referencia al audio.
-	- **Hecho cuando:** existe un ejemplo válido del documento y una lista de
-		invariantes que incluye `version`, `session_id` y como máximo una sesión.
+	- Decisiones: `session_id` fijo en `session-current`; estados `empty`,
+		`validating`, `processing`, `ready`, `reviewed` y `error`; audio como archivo
+		en volumen Docker; sesión vacía persistida desde el inicio; los fallos de una
+		nueva carga se devuelven como error sin modificar la sesión anterior.
+	- **Hecho cuando:** el plan contiene ejemplos de sesión vacía y completa,
+		campos obligatorios, estados e invariantes de reemplazo seguro.
 
-- [ ] **T3 — Definir el contrato normalizado de transcripción** (25 min)
+- [x] **T3 — Definir el contrato normalizado de transcripción** (25 min)
 	- RF/RNF: RF-004, RF-005, RNF-004.
-	- Especificar la respuesta independiente del proveedor: idioma, segmentos,
-		palabras opcionales, timestamps y estados de error.
-	- **Hecho cuando:** una respuesta válida y una respuesta inválida están
-		descritas con sus campos y reglas de validación.
+	- Decisiones: idioma `es` en el MVP; timestamps obligatorios por palabra y
+		segmento; segmentos ordenados, dentro de la duración y sin solapamientos; un
+		reintento automático; errores normalizados sin aceptar respuestas parciales.
+	- **Hecho cuando:** el plan describe una respuesta válida, una respuesta
+		inválida, las reglas de segmentos y el comportamiento del reintento.
 
 - [ ] **T4 — Diseñar la validación y advertencia de audio sintético** (20 min)
 	- RF/RNF: RF-001, RF-002, RF-003, RNF-001.
@@ -28,8 +33,8 @@
 
 - [ ] **T5 — Preparar proveedor falso y escenarios de error** (25 min)
 	- RF: RF-004, RF-005, RF-006.
-	- Definir respuestas simuladas para éxito, timeout, rechazo remoto, respuesta
-		incompleta y timestamps inválidos.
+	- Definir respuestas simuladas para éxito, timeout, rechazo del servicio local,
+		respuesta incompleta y timestamps inválidos.
 	- **Hecho cuando:** cada escenario produce un resultado esperado sin llamar a
 		un proveedor cloud real.
 
@@ -70,10 +75,10 @@
 
 - [ ] **T11 — Definir contrato de exportación** (20 min)
 	- RF: RF-016.
-	- Concretar campos, codificación y tratamiento del audio o sus metadatos en el
-		formato decidido en T1.
-	- **Hecho cuando:** un ejemplo de exportación contiene sesión, transcripción,
-		timestamps y anotaciones, sin sesiones reemplazadas.
+	- Concretar campos, codificación y persistencia del documento JSON en
+		PostgreSQL, incluyendo el audio o sus metadatos.
+	- **Hecho cuando:** un ejemplo de JSON persistido contiene sesión,
+		transcripción, timestamps y anotaciones, sin sesiones reemplazadas.
 
 - [ ] **T12 — Integrar el flujo principal** (25 min)
 	- RF: RF-001 a RF-016.

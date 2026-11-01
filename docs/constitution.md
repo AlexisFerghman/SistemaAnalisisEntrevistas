@@ -18,7 +18,9 @@ El MVP trabaja únicamente con audios ficticios o sintéticos. No admite datos r
 
 - El MVP solo permite datos ficticios o sintéticos.
 - El usuario no debe cargar entrevistas reales, nombres, identificadores, 	historias clínicas ni ningún otro dato sensible.
-- El audio se procesa mediante un proveedor cloud de transcripción. La 	selección y configuración concreta del proveedor se definirá en el plan.
+- En el MVP, el audio se procesa mediante un servicio local aislado en Docker.
+- El despliegue en un servidor cloud privado se reserva para entregas finales y
+	requerirá una revisión posterior de seguridad y arquitectura.
 - Esta versión no implementa autenticación, cuentas, roles ni control de acceso multiusuario y no debe considerarse apta para producción.
 
 ### P3. Sesión única y eliminación de datos

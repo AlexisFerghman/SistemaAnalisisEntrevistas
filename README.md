@@ -23,6 +23,7 @@ Servicios:
 - Frontend: http://localhost:5173
 - API: http://localhost:8000
 - API health: http://localhost:8000/health
+- PostgreSQL desde el host: `localhost:5433` (dentro de Docker: `db:5432`)
 
 La API inicial expone únicamente el estado del servicio y la sesión actual.
 La sesión es única y no hay autenticación en este prototipo.
@@ -34,5 +35,6 @@ python3 -m py_compile backend/app/*.py
 python3 -m json.tool frontend/package.json
 ```
 
-El proveedor cloud de transcripción, los límites del audio y el formato de
-exportación se definirán antes de implementar las tareas funcionales.
+El MVP utiliza servicios locales aislados en Docker, admite audio `.mp3` y
+`.wav` de hasta 120 MB y persiste la exportación como JSON en PostgreSQL. El
+despliegue en un servidor cloud privado queda reservado para entregas finales.

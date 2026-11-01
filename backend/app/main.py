@@ -20,9 +20,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Analisis de entrevistas API", version="0.1.0", lifespan=lifespan)
 
 origins = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "").split(",") if origin.strip()]
+origin_regex = os.getenv(
+    "CORS_ORIGIN_REGEX",
+    r"^https?://(localhost|127\.0\.0\.1|172\.20\.\d+\.\d+)(:\d+)?$",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins or ["http://localhost:5173"],
+    allow_origin_regex=origin_regex,
     allow_methods=["*"],
     allow_headers=["*"],
 )
