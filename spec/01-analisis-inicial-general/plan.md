@@ -79,7 +79,7 @@ interna; no se guardarán identidades de pacientes ni datos clínicos reales.
 			"text": "Observación de prueba",
 			"segment_id": "segment-001",
 			"start_time": 0.0,
-			"end_time": 3.2
+			"end_time": 3.2 
 		}
 	]
 }
