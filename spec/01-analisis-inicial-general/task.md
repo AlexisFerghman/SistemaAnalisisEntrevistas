@@ -24,33 +24,40 @@
 	- **Hecho cuando:** el plan describe una respuesta válida, una respuesta
 		inválida, las reglas de segmentos y el comportamiento del reintento.
 
-- [ ] **T4 — Diseñar la validación y advertencia de audio sintético** (20 min)
+- [x] **T4 — Diseñar la validación y advertencia de audio sintético** (20 min)
 	- RF/RNF: RF-001, RF-002, RF-003, RNF-001.
-	- Definir los estados de validación, mensajes de rechazo y advertencia visible
-		antes del envío cloud.
-	- **Hecho cuando:** están documentados los casos de formato, archivo vacío,
-		tamaño, duración y advertencia de datos reales.
+	- Decisiones: validar extensión, MIME y estructura real; aceptar `.mp3` y
+		`.wav` hasta 120 MB sin límite independiente de duración; mostrar banner
+		permanente y exigir confirmación antes de cada envío; conservar la sesión ante
+		un rechazo.
+	- **Hecho cuando:** el plan documenta los estados de validación, mensajes de
+		rechazo, confirmación y preservación de la sesión actual.
 
-- [ ] **T5 — Preparar proveedor falso y escenarios de error** (25 min)
+- [x] **T5 — Preparar transcripción real y escenarios de error** (25 min)
 	- RF: RF-004, RF-005, RF-006.
-	- Definir respuestas simuladas para éxito, timeout, rechazo del servicio local,
-		respuesta incompleta y timestamps inválidos.
-	- **Hecho cuando:** cada escenario produce un resultado esperado sin llamar a
-		un proveedor cloud real.
+	- Decisiones: grabación sintética real; `faster-whisper` con modelo `base`,
+		idioma `es`, `word_timestamps=True`, GPU si está disponible y CPU como
+		fallback. El proveedor falso se mantiene solo para pruebas deterministas.
+	- **Hecho cuando:** el plan define el motor real, su configuración de
+		ejecución, la respuesta normalizada y los escenarios de error cubiertos por
+		pruebas reales y dobles de prueba.
 
-- [ ] **T6 — Definir la persistencia temporal de la sesión** (25 min)
+- [x] **T6 — Definir la persistencia temporal de la sesión** (25 min)
 	- RF: RF-012.
-	- Elegir la representación concreta del documento y del archivo de audio
-		actual dentro del almacenamiento de prototipo.
-	- **Hecho cuando:** se puede crear, leer y eliminar una sesión única sin
-		conservar sesiones anteriores.
+	- Decisiones: audio en `./data/audio` montado como `/data/audio`; archivo
+		temporal antes de confirmarlo como `current.<ext>`; `session-current` se crea
+		al arrancar; si falta el archivo referenciado, la sesión pasa a `error` y se
+		conserva el JSON para diagnóstico.
+	- **Hecho cuando:** el plan define el documento PostgreSQL, la referencia
+		relativa al audio, la inicialización y la respuesta ante archivos ausentes.
 
-- [ ] **T7 — Diseñar el reemplazo seguro de sesión** (25 min)
+- [x] **T7 — Diseñar el reemplazo seguro de sesión** (25 min)
 	- RF: RF-013, RF-014, RF-015.
-	- Detallar los estados temporal, confirmada y descartada, incluyendo fallos y
-		cancelación durante carga, transcripción o persistencia.
-	- **Hecho cuando:** una prueba o diagrama demuestra que la sesión anterior
-		sobrevive hasta la confirmación de la nueva.
+	- Decisiones: confirmar solo cuando audio y JSON estén guardados; limpiar el
+		audio anterior después de confirmar; mantener la nueva sesión si esa limpieza
+	 falla; cancelar limpiando temporales; rechazar cargas simultáneas.
+	- **Hecho cuando:** el plan define el flujo temporal, confirmado y descartado,
+		el rollback ante fallo y la protección frente a operaciones simultáneas.
 
 - [ ] **T8 — Preparar el visor y reproductor sincronizado** (25 min)
 	- RF: RF-007.
@@ -82,8 +89,9 @@
 
 - [ ] **T12 — Integrar el flujo principal** (25 min)
 	- RF: RF-001 a RF-016.
-	- Ordenar el recorrido cargar -> validar -> transcribir -> editar -> anotar ->
-		exportar usando el proveedor falso.
+	- Ordenar el recorrido cargar -> validar -> transcribir con `faster-whisper` ->
+		editar -> anotar -> persistir el JSON; reservar el proveedor falso para
+		simular errores.
 	- **Hecho cuando:** el recorrido completo funciona con un audio sintético y
 		produce una exportación válida.
 

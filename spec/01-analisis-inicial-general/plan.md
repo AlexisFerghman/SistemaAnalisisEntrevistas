@@ -17,10 +17,10 @@ historial de sesiones.
 - **Carga y validación de audio:** recibe el archivo, valida extensión, tipo,
 	tamaño y duración, y muestra la advertencia de uso exclusivo con datos
 	sintéticos. Cubre RF-001, RF-002 y RF-003.
-- **Adaptador de transcripción local:** encapsula la comunicación con el
-	servicio aislado en Docker, normaliza su respuesta al formato interno y
-	traduce sus errores a estados comprensibles para la aplicación. Cubre RF-004,
-	RF-005 y RF-006.
+- **Adaptador de transcripción local:** encapsula la ejecución de
+	`faster-whisper` en el servicio aislado de Docker, normaliza su respuesta al
+	formato interno y traduce sus errores a estados comprensibles para la
+	aplicación. Cubre RF-004, RF-005 y RF-006.
 - **Sesión única:** crea, consulta, actualiza y elimina la única sesión
 	persistida. Usa una operación de reemplazo temporal para conservar la sesión
 	anterior hasta que la nueva se haya procesado y guardado correctamente. Cubre
@@ -108,6 +108,13 @@ Reglas del modelo:
 	reemplazar una sesión no cambia el estado persistido de la sesión anterior.
 - La sesión inicial siempre existe con `status: empty`, `audio: null`,
 	`transcription: null` y `annotations: []`.
+- El audio se almacena en la carpeta del host `./data/audio`, montada en la API
+	como `/data/audio`; `storage_ref` contiene una ruta relativa, nunca una ruta
+	absoluta del host.
+- La API crea `session-current` al arrancar si todavía no existe.
+- Si `storage_ref` apunta a un archivo inexistente, la API marca la sesión como
+	`error` y conserva el JSON para diagnóstico; no la reemplaza silenciosamente
+	por una sesión vacía.
 - Los tiempos se expresan en segundos desde el inicio del audio.
 - `start_time` debe ser menor que `end_time`; los segmentos deben estar ordenados,
 	no solaparse y quedar dentro de la duración del audio.
@@ -120,21 +127,57 @@ Reglas del modelo:
 ## Persistencia y reemplazo de sesión
 
 La persistencia se organizará en PostgreSQL con un documento de sesión y una
-referencia al archivo de audio actual. El plan no fija todavía si el audio se
-guardará en el sistema de archivos del servicio o en almacenamiento de objetos.
+referencia relativa al archivo de audio actual en `/data/audio`. Durante la
+carga, el archivo se escribe como temporal; tras confirmar la transcripción se
+renombra a `current.<ext>`.
 
 El flujo de reemplazo será:
 
 1. Validar el nuevo audio sin modificar la sesión actual.
 2. Enviar el audio al servicio local y recibir una respuesta válida.
-3. Normalizar y guardar la nueva sesión en una ubicación temporal.
+3. Guardar el audio como temporal y normalizar la nueva sesión en una ubicación
+	temporal.
 4. Confirmar que el documento y el audio pueden leerse correctamente.
-5. Reemplazar la sesión actual y eliminar el audio anterior.
-6. Si cualquier paso anterior falla o se cancela, eliminar los temporales y
-	 conservar la sesión anterior.
+5. Promover el audio temporal a `current.<ext>` y persistir el nuevo JSON en
+	PostgreSQL; la nueva sesión se considera confirmada solo cuando ambos pasos
+	terminan correctamente.
+6. Después de confirmar, eliminar el audio anterior. Si esta limpieza falla, la
+	nueva sesión permanece activa y el archivo anterior queda pendiente de
+	limpieza.
+7. Si cualquier paso anterior falla o se cancela, eliminar los temporales,
+	restaurar la referencia anterior si fuese necesario y conservar la sesión
+	anterior.
 
 ## Decisiones técnicas
 
+- **Transcripción real en vez de una respuesta simulada:** el MVP procesa una
+	grabación sintética real con `faster-whisper`; el proveedor falso queda
+	reservado para pruebas deterministas y escenarios de error.
+- **Modelo `base` en vez de `tiny` o `small`:** se elige un equilibrio entre
+	calidad y consumo para desarrollo. Se descarta `tiny` por su menor calidad y
+	`small` por su mayor coste de CPU y memoria en el MVP.
+- **GPU con fallback a CPU en vez de exigir GPU:** se permite aprovechar GPU
+	cuando exista sin bloquear equipos de desarrollo que solo tengan CPU.
+- **Validación completa en vez de validar solo la extensión:** se comprueban
+	extensión, MIME y estructura real del audio para evitar archivos renombrados o
+	corruptos. Se descarta aceptar un archivo únicamente por su nombre.
+- **Confirmación por carga y banner permanente en vez de un aviso único:** se
+	refuerza que solo se permiten datos sintéticos sin pretender detectar datos
+	personales automáticamente.
+- **Solo límite de tamaño en vez de límite de duración:** se elige un máximo de
+	120 MB porque la duración depende del códec, bitrate, canales y frecuencia de
+	muestreo. Se descarta fijar una duración que pueda rechazar audios válidos.
+- **Conservar la sesión ante validación fallida en vez de cambiarla a `error`:**
+	la validación ocurre antes del procesamiento y no debe alterar una sesión
+	confirmada.
+- **Confirmar antes de limpiar el audio anterior:** la nueva sesión se activa
+	cuando sus propios datos están completos; un fallo al borrar el audio antiguo
+	no invalida la sesión nueva.
+- **Rechazar cargas simultáneas en vez de encolarlas o mezclarlas:** una única
+	operación de reemplazo activa evita carreras entre archivos temporales y
+	resultados de transcripción.
+- **Cancelar y limpiar temporales en vez de guardar resultados parciales:** una
+	cancelación durante la transcripción conserva la sesión anterior.
 - **Aplicación modular única en vez de microservicios:** se descarta dividir el
 	MVP en servicios independientes porque solo hay un flujo, un usuario
 	conceptual y una sesión. La separación lógica de módulos permitirá extraer
@@ -163,14 +206,23 @@ El flujo de reemplazo será:
 
 ## Contratos internos
 
-- **Entrada de audio:** archivo `.mp3` o `.wav`, de hasta 120 MB, con duración
-	dentro de los límites del servicio y solo datos sintéticos.
+- **Entrada de audio:** archivo `.mp3` o `.wav`, de hasta 120 MB, sin límite
+	independiente de duración y solo datos sintéticos. La validación comprueba
+	extensión, MIME y estructura real del audio.
+- **Advertencia de datos:** la interfaz muestra un banner permanente y exige una
+	confirmación explícita antes de enviar cada archivo al servicio local. No se
+	intenta detectar automáticamente información personal.
 - **Respuesta normalizada de transcripción:** `language: "es"`, proveedor,
 	`retry_count`, segmentos ordenados sin solapamientos, timestamps válidos,
 	texto y palabras con timestamps obligatorios.
 - **Error del servicio local:** categoría estable para timeout, rechazo,
 	respuesta inválida o fallo inesperado, con un único reintento automático;
 	nunca se presenta una respuesta parcial como transcripción válida.
+- **Error de validación:** se informa el motivo, no se inicia el procesamiento,
+	se conserva la sesión actual y se permite seleccionar otro archivo.
+- **Motor de transcripción:** `faster-whisper` con el modelo `base`, idioma
+	`es` y `word_timestamps=True`. Se usa GPU cuando está disponible y CPU como
+	fallback, con `compute_type="int8"` en CPU.
 - **Anotación:** texto de 1 a 500 caracteres, referencia a segmento existente y
 	rango temporal válido.
 - **Exportación:** documento JSON persistido en PostgreSQL que contiene la
@@ -207,9 +259,9 @@ El flujo de reemplazo será:
 	anotaciones, incluyendo sesiones sin anotaciones y con texto parcialmente
 	editado. Cubre RF-016.
 - **Prueba de aceptación:** recorrido completo con un audio sintético fijo:
-	cargar, transcribir mediante proveedor falso, editar, anotar, reemplazar la
-	sesión y exportar. Debe cubrir los criterios de finalización sin llamar a un
-	proveedor cloud real.
+	cargar, transcribir mediante `faster-whisper`, editar, anotar, reemplazar la
+	sesión y persistir el JSON. Los escenarios de error se ejecutan con el
+	proveedor falso y no requieren una llamada cloud.
 
 ## Matriz de cobertura
 
