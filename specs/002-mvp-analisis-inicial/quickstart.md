@@ -10,14 +10,14 @@ código de implementación.
 - Docker Engine y Docker Compose.
 - `curl` y `jq` en la máquina anfitriona.
 - Un audio **sintético** en español, `.wav` o `.mp3`, de 30 a 90 segundos, en
-  `samples/audio/entrevista-sintetica.wav`. Si aún no existe, genéralo con una voz sintética, por
-  ejemplo:
+  `fixtures/audio/entrevista-sintetica.wav`. Si aún no existe, sigue las instrucciones de
+  [`fixtures/audio/README.md`](../../fixtures/audio/README.md); en resumen:
 
   ```bash
-  mkdir -p samples/audio
+  mkdir -p fixtures/audio
   command -v espeak-ng && espeak-ng -v es -s 140 -w /tmp/voz.wav \
     "Esta es una entrevista sintetica de prueba. No contiene datos reales."
-  command -v ffmpeg && ffmpeg -y -i /tmp/voz.wav -ar 16000 -ac 1 samples/audio/entrevista-sintetica.wav
+  command -v ffmpeg && ffmpeg -y -i /tmp/voz.wav -ar 16000 -ac 1 fixtures/audio/entrevista-sintetica.wav
   ```
 
   Nunca uses una grabación real.
@@ -45,7 +45,7 @@ curl -s http://localhost:8000/api/session | jq '{status, has_audio: (.audio != n
 
 ```bash
 time curl -s -X POST http://localhost:8000/api/session/audio \
-  -F "file=@samples/audio/entrevista-sintetica.wav" | jq '{status: .session.status, cancelled, segments: (.session.transcription.segments | length)}'
+  -F "file=@fixtures/audio/entrevista-sintetica.wav" | jq '{status: .session.status, cancelled, segments: (.session.transcription.segments | length)}'
 ```
 
 **Esperado**: `200`, `status: "ready"`, `cancelled: false`, al menos un segmento. Además:
@@ -83,9 +83,9 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/sessi
 En una terminal:
 
 ```bash
-curl -s -X POST http://localhost:8000/api/session/audio -F "file=@samples/audio/entrevista-sintetica.wav" > /tmp/primera.json &
+curl -s -X POST http://localhost:8000/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav" > /tmp/primera.json &
 sleep 2
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/audio -F "file=@samples/audio/entrevista-sintetica.wav"
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav"
 ```
 
 **Esperado**: la segunda petición responde `409` con `code: busy`. Al terminar la primera, la sesión
@@ -106,7 +106,7 @@ bloqueara, `api` aparecería como `unhealthy` y el frontend no arrancaría.
 ## Escenario 7 — Cancelación conserva la sesión anterior
 
 ```bash
-curl -s -X POST http://localhost:8000/api/session/audio -F "file=@samples/audio/entrevista-sintetica.wav" > /tmp/carga.json &
+curl -s -X POST http://localhost:8000/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav" > /tmp/carga.json &
 sleep 2
 curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/cancel
 wait
@@ -152,7 +152,7 @@ anotación.
 ```bash
 curl -s -X POST http://localhost:8000/api/session/export | jq '{exported_at, claves: (.document | keys)}'
 curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/audio \
-  -F "file=@samples/audio/entrevista-sintetica.wav"
+  -F "file=@fixtures/audio/entrevista-sintetica.wav"
 curl -s http://localhost:8000/api/session | jq '{annotations: (.annotations | length), status}'
 ls -1 data/audio
 ```

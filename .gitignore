@@ -9,13 +9,17 @@ __pycache__/
 # macOS
 .DS_Store
 
-# Datos locales de la app
-habits-cli/
-samples/
-
 # Variables y dependencias del stack
 .env
 node_modules/
 postgres_data/
 dist/
+
+# Audio de la sesión única y temporales de reemplazo
+data/audio/*
+!data/audio/.gitkeep
+
+# Fixtures de audio generados localmente (ver fixtures/audio/README.md)
+fixtures/audio/*.wav
+fixtures/audio/*.mp3
 

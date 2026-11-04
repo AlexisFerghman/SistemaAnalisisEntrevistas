@@ -31,19 +31,19 @@ Cada tarea incluye la ruta de archivo exacta y las referencias `RF-*`/`RNF-*` qu
 
 **Propósito**: dependencias, configuración de pruebas y volumen de audio. Nada de lógica de negocio.
 
-- [ ] T001 Añadir `faster-whisper` (versión fijada) y `av` a `backend/requirements.txt`, conservando
+- [X] T001 Añadir `faster-whisper` (versión fijada) y `av` a `backend/requirements.txt`, conservando
   `fastapi==0.115.6`, `uvicorn[standard]==0.34.0`, `SQLAlchemy==2.0.36`, `psycopg[binary]==3.2.3`
-- [ ] T002 [P] Crear `backend/requirements-dev.txt` con `pytest`, `httpx` y `pytest-cov` para poder
+- [X] T002 [P] Crear `backend/requirements-dev.txt` con `pytest`, `httpx` y `pytest-cov` para poder
   ejecutar `docker compose exec api pytest`
-- [ ] T003 Modificar `backend/Dockerfile` para instalar `requirements-dev.txt` y precargar el modelo
+- [X] T003 Modificar `backend/Dockerfile` para instalar `requirements-dev.txt` y precargar el modelo
   `base` con `RUN python -c "from faster_whisper import WhisperModel; WhisperModel('base', device='cpu', compute_type='int8')"`
   fijando `HF_HOME=/opt/models`, de modo que el contenedor no necesite red en ejecución (research D20)
-- [ ] T004 [P] Crear `backend/tests/conftest.py` con un fixture `client` (`TestClient`) y un fixture de
+- [X] T004 [P] Crear `backend/tests/conftest.py` con un fixture `client` (`TestClient`) y un fixture de
   base de datos que use `DATABASE_URL`; crear `backend/tests/{unit,integration,contract}/__init__.py`
-- [ ] T005 [P] Configurar Vitest en `frontend/package.json` (devDependencies `vitest`, `jsdom`,
+- [X] T005 [P] Configurar Vitest en `frontend/package.json` (devDependencies `vitest`, `jsdom`,
   `@testing-library/react`) y en `frontend/vite.config.js` (`test: { environment: 'jsdom', setupFiles }`);
   crear `frontend/tests/setup.js`
-- [ ] T006 [P] Crear `data/audio/.gitkeep` y añadir `data/audio/*` a `.gitignore` para no versionar
+- [X] T006 [P] Crear `data/audio/.gitkeep` y añadir `data/audio/*` a `.gitignore` para no versionar
   audios ni temporales
 
 **Checkpoint**: `docker compose build` funciona y `docker compose exec api pytest` arranca sin errores.
@@ -93,7 +93,7 @@ el adaptador se puede probar con el motor falso.
 **Goal**: el profesional carga un audio sintético válido y recibe una transcripción en español con
 marcas por palabra y oración, sin perder la sesión anterior ante fallos.
 
-**Independent Test**: `POST /api/session/audio` con `samples/audio/entrevista-sintetica.wav` devuelve
+**Independent Test**: `POST /api/session/audio` con `fixtures/audio/entrevista-sintetica.wav` devuelve
 `200` con `status: ready` y al menos un segmento con palabras marcadas; un archivo inválido devuelve
 error y la sesión previa sigue intacta.
 
