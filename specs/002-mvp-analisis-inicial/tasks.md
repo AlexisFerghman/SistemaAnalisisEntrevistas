@@ -56,29 +56,29 @@ Cada tarea incluye la ruta de archivo exacta y las referencias `RF-*`/`RNF-*` qu
 
 **⚠️ CRÍTICO**: esta fase bloquea por completo las fases 3 a 6.
 
-- [ ] T007 Añadir el modelo `CurrentExport` (tabla `current_export`, fila fija `current`, columnas
+- [X] T007 Añadir el modelo `CurrentExport` (tabla `current_export`, fila fija `current`, columnas
   `payload JSON` y `exported_at`) en `backend/app/models.py` (RF-016, D24)
-- [ ] T008 Implementar en `backend/app/services/session_store.py` la creación del documento inicial
+- [X] T008 Implementar en `backend/app/services/session_store.py` la creación del documento inicial
   `{"version": 1, "session_id": "session-current", "status": "empty", "audio": null, "transcription": null, "annotations": [], "operation": null}`
   cuando no exista, invocado desde `backend/app/main.py` en `lifespan` (RF-012)
-- [ ] T009 Implementar en `backend/app/main.py` la reconciliación de arranque: si
+- [X] T009 Implementar en `backend/app/main.py` la reconciliación de arranque: si
   `status == "processing"`, restaurar `operation.previous_status` y limpiar `operation` (research D25)
-- [ ] T010 Crear `backend/app/api/errors.py` con el sobre uniforme
+- [X] T010 Crear `backend/app/api/errors.py` con el sobre uniforme
   `{"error": {"code", "message", "details"}}` y manejadores para 400/404/409/413/415/422/500/503
   según `contracts/api.md`
-- [ ] T011 Implementar en `backend/app/services/session_store.py` el candado de operación única
+- [X] T011 Implementar en `backend/app/services/session_store.py` el candado de operación única
   (`threading.Lock` no bloqueante) y la consulta `is_busy()` usada por las rutas (D09)
-- [ ] T012 Crear `backend/app/services/audio_validation.py`: validar extensión `.mp3` o `.wav`, MIME
+- [X] T012 Crear `backend/app/services/audio_validation.py`: validar extensión `.mp3` o `.wav`, MIME
   `audio/mpeg` o `audio/wav`, tamaño máximo `125829120` bytes (120 MB), archivo no vacío y estructura
   legible con `av`; calcular `duration_seconds` con `av`; **sin** tope de duración (D04, D06)
-- [ ] T013 Crear `backend/app/transcription/adapter.py` con `transcribe(audio_path, language="es",
+- [X] T013 Crear `backend/app/transcription/adapter.py` con `transcribe(audio_path, language="es",
   on_segment=None, should_cancel=None)`, la normalización descrita en
   `contracts/transcription-adapter.md` y las cinco excepciones (`TranscriptionRejected`,
   `TranscriptionTimeout`, `TranscriptionUnavailable`, `TranscriptionInvalidResponse`,
   `TranscriptionCancelled`); reintento único solo para timeout y unavailable (RF-006, RNF-004)
-- [ ] T014 [P] Crear `backend/app/transcription/fake_engine.py`: transcripción determinista, sin cargar
+- [X] T014 [P] Crear `backend/app/transcription/fake_engine.py`: transcripción determinista, sin cargar
   el modelo, con inyección de las cinco excepciones vía variable de entorno (D20)
-- [ ] T015 Implementar en `backend/app/services/session_store.py` el reemplazo atómico de 7 pasos:
+- [X] T015 Implementar en `backend/app/services/session_store.py` el reemplazo atómico de 7 pasos:
   validar sin tocar la sesión, transcribir, escribir temporales, verificar legibilidad, promover audio y
   documento, limpiar audio y exportación anteriores, revertir ante fallo o cancelación (RF-013, RF-014,
   RF-015, D17)

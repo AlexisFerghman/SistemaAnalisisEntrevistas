@@ -14,6 +14,7 @@ invoca el motor, normaliza la salida y traduce cualquier fallo a una de cuatro c
 ```text
 transcribe(
     audio_path: Path,
+    duration_seconds: float,
     language: str = "es",
     on_segment: Callable[[int], None] | None = None,
     should_cancel: Callable[[], bool] | None = None,
@@ -23,6 +24,7 @@ transcribe(
 | Parámetro | Contrato |
 |---|---|
 | `audio_path` | Ruta absoluta a un archivo ya validado y guardado como temporal |
+| `duration_seconds` | Duración real del audio, calculada por `services/audio_validation.py`; se usa para recortar los segmentos |
 | `language` | Código ISO-639-1; el MVP usa siempre `es` |
 | `on_segment` | Se invoca con el índice del último segmento completado; permite persistir progreso observable |
 | `should_cancel` | Se consulta **entre segmentos**; si devuelve `True`, el adaptador aborta y lanza `TranscriptionCancelled` |
