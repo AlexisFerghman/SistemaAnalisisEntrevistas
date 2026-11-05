@@ -7,6 +7,7 @@ timeout | unavailable | rejected | invalid | cancelled.
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 from typing import Any, Callable
 
@@ -81,6 +82,7 @@ class FakeEngine:
         should_cancel: Callable[[], bool] | None,
     ) -> list[dict[str, Any]]:
         error = (os.getenv("FAKE_TRANSCRIBER_ERROR") or "").strip().lower()
+        delay = float(os.getenv("FAKE_TRANSCRIBER_DELAY", "0") or 0)
 
         if error in _ERRORS:
             raise _ERRORS[error]("Fallo simulado del motor de transcripción")
@@ -89,6 +91,8 @@ class FakeEngine:
             raise TranscriptionCancelled("Operación cancelada antes de empezar")
 
         for index, _segment in enumerate(FAKE_SEGMENTS):
+            if delay > 0:
+                time.sleep(delay)
             if should_cancel is not None and should_cancel():
                 raise TranscriptionCancelled("Operación cancelada entre segmentos")
             if on_segment is not None:

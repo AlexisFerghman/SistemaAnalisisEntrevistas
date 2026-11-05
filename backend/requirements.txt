@@ -3,4 +3,6 @@ uvicorn[standard]==0.34.0
 SQLAlchemy==2.0.36
 psycopg[binary]==3.2.3
 faster-whisper==1.2.1
-av==19.0.2
+# av 17+ eliminó `metadata_errors`, que faster-whisper 1.2.1 todavía usa (research D25)
+av==16.1.0
+python-multipart==0.0.33

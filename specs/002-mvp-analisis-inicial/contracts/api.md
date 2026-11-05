@@ -33,6 +33,14 @@ Documento de la sesión actual, incluido su `status`.
 - **200**: documento de sesión (ver [data-model.md](../data-model.md))
 - **404**: `session_not_initialized` — solo si la inicialización falló
 
+### `GET /api/session/audio`
+
+Entrega el audio de la sesión vigente para reproducción y para calcular la waveform en el cliente.
+
+- **200**: bytes del archivo, con `Content-Type` real y `Accept-Ranges: bytes`
+- **404**: `no_audio` — la sesión no tiene audio
+- **500**: `audio_missing` — el documento apunta a un archivo inexistente (la sesión pasa a `error`)
+
 ### `POST /api/session/audio`
 
 Carga, valida y transcribe un audio sintético. Operación **síncrona**: la respuesta llega cuando la

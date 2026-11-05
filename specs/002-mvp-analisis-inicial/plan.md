@@ -48,7 +48,7 @@ sola carga concurrente; sin autenticación ni roles; solo datos sintéticos; el 
 opera sin egreso a internet.
 
 **Scale/Scope**: un usuario conceptual, una sesión, una carga a la vez, una pantalla principal con
-estados de operación, 9 endpoints HTTP y 1 adaptador de transcripción.
+estados de operación, 10 endpoints HTTP y 1 adaptador de transcripción.
 
 ## Constitution Check
 

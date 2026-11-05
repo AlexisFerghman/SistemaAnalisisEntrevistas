@@ -25,8 +25,15 @@ class AudioValidationError(Exception):
         self.message = message
 
 
+GENERIC_TYPES = {"", "application/octet-stream", "binary/octet-stream"}
+
+
 def validate_upload(filename: str | None, content_type: str | None) -> str:
-    """Comprueba extensión y MIME declarado. Devuelve la extensión normalizada."""
+    """Comprueba extensión y MIME declarado. Devuelve la extensión normalizada.
+
+    Un MIME genérico (`application/octet-stream`) se acepta: algunos navegadores y clientes no
+    identifican `.wav`. La estructura real del audio se valida después con `inspect_audio`.
+    """
     if not filename:
         raise AudioValidationError("missing_file", "No se recibió ningún archivo")
 
@@ -39,7 +46,7 @@ def validate_upload(filename: str | None, content_type: str | None) -> str:
 
     if content_type:
         declared = content_type.split(";")[0].strip().lower()
-        if declared and declared not in ALLOWED_TYPES[suffix]:
+        if declared not in GENERIC_TYPES and declared not in ALLOWED_TYPES[suffix]:
             raise AudioValidationError(
                 "unsupported_format",
                 f"El tipo {declared} no corresponde a la extensión {suffix}",

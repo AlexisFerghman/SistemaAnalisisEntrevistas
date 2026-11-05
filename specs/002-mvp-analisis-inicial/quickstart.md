@@ -26,17 +26,22 @@ código de implementación.
 
 ```bash
 docker compose up --build
-curl -s http://localhost:8000/health | jq .
+curl -s http://localhost:5173/health | jq .
 ```
 
 **Esperado**: `{"status":"ok"}` y el frontend disponible en `http://localhost:5173`.
+
+> **Base de las pruebas**: todos los comandos usan `http://localhost:5173`, el servidor de Vite, que
+> hace de proxy hacia la API. `api` y `db` viven solo en redes `internal: true`, así que Docker no
+> publica sus puertos en el host: el único punto de entrada es el frontend. Si prefieres llamar a la
+> API directamente, usa `docker compose exec -T api python -c ...` o `docker compose exec -T api curl`.
 
 ---
 
 ## Escenario 1 — Sesión inicial vacía
 
 ```bash
-curl -s http://localhost:8000/api/session | jq '{status, has_audio: (.audio != null), annotations}'
+curl -s http://localhost:5173/api/session | jq '{status, has_audio: (.audio != null), annotations}'
 ```
 
 **Esperado**: `status: "empty"`, `has_audio: false`, `annotations: []`.
@@ -44,14 +49,14 @@ curl -s http://localhost:8000/api/session | jq '{status, has_audio: (.audio != n
 ## Escenario 2 — Carga válida con transcripción sincronizada
 
 ```bash
-time curl -s -X POST http://localhost:8000/api/session/audio \
-  -F "file=@fixtures/audio/entrevista-sintetica.wav" | jq '{status: .session.status, cancelled, segments: (.session.transcription.segments | length)}'
+time curl -s -X POST http://localhost:5173/api/session/audio \
+  -F "file=@fixtures/audio/entrevista-sintetica.wav;type=audio/wav" | jq '{status: .session.status, cancelled, segments: (.session.transcription.segments | length)}'
 ```
 
 **Esperado**: `200`, `status: "ready"`, `cancelled: false`, al menos un segmento. Además:
 
 ```bash
-curl -s http://localhost:8000/api/session | jq '.transcription.segments[0] | {start_time, end_time, text, words: (.words | length)}'
+curl -s http://localhost:5173/api/session | jq '.transcription.segments[0] | {start_time, end_time, text, words: (.words | length)}'
 ```
 
 **Esperado**: `start_time < end_time`, texto no vacío y al menos una palabra con sus propias marcas.
@@ -61,8 +66,8 @@ Registra el tiempo total: el objetivo es ≤ 15 minutos para 10 minutos de audio
 
 ```bash
 printf 'esto no es audio' > /tmp/falso.wav
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/audio -F "file=@/tmp/falso.wav"
-curl -s http://localhost:8000/api/session | jq '.status'
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:5173/api/session/audio -F "file=@/tmp/falso.wav;type=audio/wav"
+curl -s http://localhost:5173/api/session | jq '.status'
 ```
 
 **Esperado**: `422` con `code: invalid_audio`; la sesión sigue en `ready` y conserva la transcripción del
@@ -71,9 +76,9 @@ escenario 2.
 ## Escenario 4 — Formato no admitido y tamaño excedido
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/audio -F "file=@README.md;filename=notas.txt"
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:5173/api/session/audio -F "file=@README.md;filename=notas.txt"
 dd if=/dev/zero of=/tmp/grande.wav bs=1M count=130 2>/dev/null
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/audio -F "file=@/tmp/grande.wav"
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:5173/api/session/audio -F "file=@/tmp/grande.wav;type=audio/wav"
 ```
 
 **Esperado**: `415 unsupported_format` y `413 payload_too_large`. En ambos casos la sesión no cambia.
@@ -83,9 +88,9 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/sessi
 En una terminal:
 
 ```bash
-curl -s -X POST http://localhost:8000/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav" > /tmp/primera.json &
+curl -s -X POST http://localhost:5173/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav;type=audio/wav" > /tmp/primera.json &
 sleep 2
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav"
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:5173/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav;type=audio/wav"
 ```
 
 **Esperado**: la segunda petición responde `409` con `code: busy`. Al terminar la primera, la sesión
@@ -96,7 +101,7 @@ tiene exactamente un audio y una transcripción, sin archivos temporales en `./d
 Con una carga en curso (escenario 5), en otra terminal:
 
 ```bash
-for i in 1 2 3; do curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' http://localhost:8000/health; sleep 1; done
+for i in 1 2 3; do curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' http://localhost:5173/health; sleep 1; done
 docker compose ps api
 ```
 
@@ -106,12 +111,12 @@ bloqueara, `api` aparecería como `unhealthy` y el frontend no arrancaría.
 ## Escenario 7 — Cancelación conserva la sesión anterior
 
 ```bash
-curl -s -X POST http://localhost:8000/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav" > /tmp/carga.json &
+curl -s -X POST http://localhost:5173/api/session/audio -F "file=@fixtures/audio/entrevista-sintetica.wav;type=audio/wav" > /tmp/carga.json &
 sleep 2
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/cancel
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:5173/api/session/cancel
 wait
 jq -r '.error.code // .session.status' /tmp/carga.json
-curl -s http://localhost:8000/api/session | jq '{status, annotations: (.annotations | length)}'
+curl -s http://localhost:5173/api/session | jq '{status, annotations: (.annotations | length)}'
 ```
 
 **Esperado**: `202` al cancelar; la carga responde `409` con `code: cancelled`; la sesión previa sigue
@@ -120,10 +125,10 @@ en `ready` con sus anotaciones intactas y sin temporales en `./data/audio`.
 ## Escenario 8 — Edición y validación de marcas de tiempo
 
 ```bash
-curl -s http://localhost:8000/api/session | jq '.transcription' > /tmp/transcripcion.json
+curl -s http://localhost:5173/api/session | jq '.transcription' > /tmp/transcripcion.json
 jq '.segments[0].start_time = 999999' /tmp/transcripcion.json > /tmp/invalida.json
 jq '{segments}' /tmp/invalida.json > /tmp/cuerpo.json
-curl -s -o /dev/null -w '%{http_code}\n' -X PUT http://localhost:8000/api/session/transcription \
+curl -s -o /dev/null -w '%{http_code}\n' -X PUT http://localhost:5173/api/session/transcription \
   -H 'Content-Type: application/json' -d @/tmp/cuerpo.json
 ```
 
@@ -133,13 +138,13 @@ respuesta es `200` y `status: "reviewed"`, y el audio original no cambia de tama
 ## Escenario 9 — Anotaciones: 500 caracteres sí, 501 no
 
 ```bash
-SEG=$(curl -s http://localhost:8000/api/session | jq -r '.transcription.segments[0].id')
+SEG=$(curl -s http://localhost:5173/api/session | jq -r '.transcription.segments[0].id')
 TEXTO500=$(python3 -c "print('a'*500)")
 TEXTO501=$(python3 -c "print('a'*501)")
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/annotations \
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:5173/api/session/annotations \
   -H 'Content-Type: application/json' \
   -d "{\"text\":\"$TEXTO500\",\"segment_id\":\"$SEG\",\"start_time\":0,\"end_time\":1}"
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/annotations \
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:5173/api/session/annotations \
   -H 'Content-Type: application/json' \
   -d "{\"text\":\"$TEXTO501\",\"segment_id\":\"$SEG\",\"start_time\":0,\"end_time\":1}"
 ```
@@ -150,10 +155,10 @@ anotación.
 ## Escenario 10 — Exportación y reemplazo de sesión
 
 ```bash
-curl -s -X POST http://localhost:8000/api/session/export | jq '{exported_at, claves: (.document | keys)}'
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/api/session/audio \
-  -F "file=@fixtures/audio/entrevista-sintetica.wav"
-curl -s http://localhost:8000/api/session | jq '{annotations: (.annotations | length), status}'
+curl -s -X POST http://localhost:5173/api/session/export | jq '{exported_at, claves: (.document | keys)}'
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:5173/api/session/audio \
+  -F "file=@fixtures/audio/entrevista-sintetica.wav;type=audio/wav"
+curl -s http://localhost:5173/api/session | jq '{annotations: (.annotations | length), status}'
 ls -1 data/audio
 ```
 
@@ -165,7 +170,7 @@ anotaciones; la nueva carga responde `200`; la sesión queda con `annotations: [
 
 ```bash
 docker compose exec api python -c "import socket; socket.setdefaulttimeout(3); socket.create_connection(('1.1.1.1', 443))" && echo "SALIDA ABIERTA" || echo "SIN EGRESO"
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8000/api/session
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:5173/api/session
 ```
 
 **Esperado**: `SIN EGRESO` y `200`. Confirma que el audio nunca sale del host y que el modelo tuvo que

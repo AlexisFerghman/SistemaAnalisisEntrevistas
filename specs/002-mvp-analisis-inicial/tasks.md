@@ -3,7 +3,8 @@
 **Input**: Documentos de diseño en `/specs/002-mvp-analisis-inicial/`
 
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md),
-[data-model.md](./data-model.md), [contracts/](./contracts/), [quickstart.md](./quickstart.md)
+[data-model.md](./data-model.md), [contracts/](./contracts/), [contracts/ui.md](./contracts/ui.md),
+[quickstart.md](./quickstart.md)
 
 **Tests**: incluidas porque `plan.md` fija `pytest` (backend) y `Vitest` (frontend) como stack
 obligatorio. En cada historia las pruebas se escriben **antes** de la implementación.
@@ -99,37 +100,45 @@ error y la sesión previa sigue intacta.
 
 ### Tests de US1 (escribir primero, deben fallar)
 
-- [ ] T016 [P] [US1] Pruebas unitarias de validación en `backend/tests/unit/test_audio_validation.py`:
+- [X] T016 [P] [US1] Pruebas unitarias de validación en `backend/tests/unit/test_audio_validation.py`:
   extensión no admitida, archivo vacío, archivo corrupto, 120 MB exactos (acepta) y 120 MB + 1 byte
   (rechaza) (RF-001, RF-002)
-- [ ] T017 [P] [US1] Pruebas de contrato del adaptador en `backend/tests/unit/test_transcription_adapter.py`
+- [X] T017 [P] [US1] Pruebas de contrato del adaptador en `backend/tests/unit/test_transcription_adapter.py`
   con `fake_engine`: respuesta válida en español, timestamps por palabra, timeout con un reintento,
   error definitivo, respuesta vacía y segmentos solapados (RF-004, RF-005, RF-006)
-- [ ] T018 [P] [US1] Prueba de integración de `/health` en
+- [X] T018 [P] [US1] Prueba de integración de `/health` en
   `backend/tests/integration/test_health_during_transcription.py`: con una transcripción lenta simulada,
   `GET /health` responde `200` en menos de 1 s (research D11)
 
 ### Implementación de US1
 
-- [ ] T019 [US1] Implementar `backend/app/transcription/faster_whisper_engine.py`: modelo `base` cargado
+- [X] T019 [US1] Implementar `backend/app/transcription/faster_whisper_engine.py`: modelo `base` cargado
   de forma perezosa y reutilizado (candado de inicialización), `language="es"`,
   `word_timestamps=True`, GPU si está disponible con CPU `int8` como respaldo, y consulta de
   `should_cancel` entre segmentos (D02, D03, D12, D21)
-- [ ] T020 [US1] Implementar `POST /api/session/audio` en `backend/app/api/session.py` como función
+- [X] T020 [US1] Implementar `POST /api/session/audio` en `backend/app/api/session.py` como función
   **síncrona** (`def`, no `async def`) que devuelve `200 {session, cancelled}`, `409 busy`,
   `409 cancelled`, `413 payload_too_large`, `415 unsupported_format`, `422 invalid_audio`,
   `500 persistence_error` o `503 transcription_unavailable` (RF-001, RF-002, RF-004, RF-006, D10, D11)
-- [ ] T021 [US1] Implementar `POST /api/session/cancel` en `backend/app/api/session.py`: marca
+- [X] T021 [US1] Implementar `POST /api/session/cancel` en `backend/app/api/session.py`: marca
   `operation.cancel_requested = true`, devuelve `202`, o `409 not_processing` si no hay operación
   (RF-015, D12)
-- [ ] T022 [P] [US1] Pruebas de integración en `backend/tests/integration/test_audio_upload.py`: carga
+- [X] T022 [P] [US1] Pruebas de integración en `backend/tests/integration/test_audio_upload.py`: carga
   válida, extensión falsa, tamaño excedido, carga simultánea `409 busy`, fallo del motor `503` y
   cancelación `409 cancelled` con sesión anterior intacta (RF-001 a RF-006, RF-012 a RF-015)
-- [ ] T023 [US1] Crear `frontend/src/components/SyntheticBanner.jsx` con banner permanente y
+- [X] T023 [US1] Crear `frontend/src/components/SyntheticBanner.jsx` con banner permanente y
   confirmación explícita obligatoria antes de cada envío (RF-003, RNF-001)
-- [ ] T024 [US1] Crear `frontend/src/components/UploadPanel.jsx` y conectarlo en
-  `frontend/src/App.jsx`: selección de archivo, estado `validating`/`processing`, botón de cancelar,
-  mensajes de error por `code` y refresco de la sesión al terminar (RF-001, RF-002, RF-015, RF-016)
+- [X] T024 [US1] Crear `frontend/src/components/UploadPanel.jsx` con el área de carga del modal
+  (arrastrar y soltar, selector nativo, validación de extensión y tamaño en cliente) y conectarlo en
+  `frontend/src/App.jsx` (RF-001, RF-002, `contracts/ui.md`)
+- [X] T049 [US1] Implementar `frontend/src/components/WorkspaceLayout.jsx` y
+  `frontend/src/components/WorkspaceHeader.jsx` según `contracts/ui.md`: cabecera con título de sesión,
+  badge de estado, perfil estático, "Nueva entrevista", "Exportar datos" y "Salir" decorativo; grid
+  `58/21/21` con apilado por debajo de 1024 px (RF-016, RNF-005)
+- [X] T050 [US1] Completar `frontend/src/components/NewInterviewModal.jsx`: fondo difuminado, foco
+  atrapado y `Esc`, selector de modelo (`Nube` habilitado, `Local` deshabilitado con "Próximamente"),
+  confirmación obligatoria de datos sintéticos, estados de progreso y cancelación, y mensajes por
+  `code` (RF-001, RF-003, RF-015, RNF-001)
 
 **Checkpoint**: el flujo cargar → transcribir funciona de punta a punta por API y por interfaz, y es
 demostrable sin editor ni anotaciones.
@@ -146,27 +155,36 @@ audio original no cambia.
 
 ### Tests de US2
 
-- [ ] T025 [P] [US2] Pruebas unitarias en `backend/tests/unit/test_transcription_edit.py`:
+- [X] T025 [P] [US2] Pruebas unitarias en `backend/tests/unit/test_transcription_edit.py`:
   `start_time < end_time`, valores negativos, segmentos solapados, segmento fuera de
   `duration_seconds`, palabra fuera de su segmento y texto vacío (RF-008, RNF-004)
-- [ ] T026 [P] [US2] Pruebas de estado del reproductor en `frontend/tests/AudioPlayer.test.jsx`:
+- [X] T026 [P] [US2] Pruebas de estado del reproductor en `frontend/tests/AudioPlayer.test.jsx`:
   cambio entre 1x, 1.25x y 1.5x, pausa, salto a timestamp y resaltado del segmento activo, sin
   reproducción real de audio (RF-007)
 
 ### Implementación de US2
 
-- [ ] T027 [US2] Implementar `PUT /api/session/transcription` en `backend/app/api/transcription.py`:
+- [X] T027 [US2] Implementar `PUT /api/session/transcription` en `backend/app/api/transcription.py`:
   recibe la lista completa de segmentos, valida y devuelve `200` con `status: "reviewed"`, `409
   not_editable` o `422 invalid_timestamps` / `empty_text` (RF-008)
-- [ ] T028 [US2] Crear `frontend/src/components/AudioPlayer.jsx`: reproducción, pausa, velocidades
+- [X] T028 [US2] Crear `frontend/src/components/AudioPlayer.jsx`: reproducción, pausa, velocidades
   1x/1.25x/1.5x, salto a timestamp y emisión del tiempo actual (RF-007)
-- [ ] T029 [US2] Crear `frontend/src/components/TranscriptEditor.jsx`: edición de texto y de marcas por
+- [X] T029 [US2] Crear `frontend/src/components/TranscriptEditor.jsx`: edición de texto y de marcas por
   segmento, con validación en cliente y guardado contra `PUT /api/session/transcription` (RF-008)
-- [ ] T030 [US2] Implementar en `frontend/src/App.jsx` la sincronización entre reproductor y editor:
+- [X] T030 [US2] Implementar en `frontend/src/App.jsx` la sincronización entre reproductor y editor:
   resaltar el segmento activo sin re-renderizar toda la lista (RF-007, RNF-004)
-- [ ] T031 [P] [US2] Prueba de integración en `backend/tests/integration/test_transcription_edit.py`:
+- [X] T031 [P] [US2] Prueba de integración en `backend/tests/integration/test_transcription_edit.py`:
   edición válida persiste, edición inválida no altera el documento y el audio conserva tamaño y
   contenido (RF-008, RF-011)
+
+- [X] T051 [US2] Implementar `frontend/src/components/AudioWaveform.jsx` con amplitud real vía
+  `AudioContext.decodeAudioData` (≈300 barras, tramo reproducido en azul, playhead, marcas cada 25 %,
+  `seek` por clic y teclado) y los puntos de anotación ámbar accesibles por teclado, según
+  `contracts/ui.md` (RF-007, RNF-004)
+
+- [X] T054 [US2] Implementar `GET /api/session/audio` en `backend/app/api/session.py` con
+  `FileResponse` (rango de bytes, `Content-Type` real, `404 no_audio` y `500 audio_missing` según
+  `contracts/api.md`), necesario para reproducir y para calcular la waveform (RF-007)
 
 **Checkpoint**: transcripción editable y sincronizada con el audio, con validaciones comprobadas.
 
@@ -203,6 +221,10 @@ de 501 devuelve `422 annotation_too_long`; editar y eliminar no modifican el aud
 - [ ] T038 [US3] Integrar anotaciones en `frontend/src/App.jsx`: selección de fragmento desde
   `TranscriptEditor` y listado sincronizado con el reproductor (RF-009)
 
+- [ ] T052 [US3] Implementar `frontend/src/components/AnnotationPanel.jsx` como placeholder de la
+  columna 3 según `contracts/ui.md`: contadores en 0, botón `+` deshabilitado, estados vacíos y botón
+  `Exportar JSON / CSV` deshabilitado (RF-009, RF-016)
+
 **Checkpoint**: las tres operaciones de anotación funcionan y respetan el límite de 500 caracteres.
 
 ---
@@ -228,6 +250,11 @@ contiene audio o metadatos, transcripción corregida, marcas de tiempo y anotaci
   `{exported_at, document}` o `409 session_not_ready` (RF-016)
 - [ ] T042 [US4] Añadir el botón de exportación en `frontend/src/components/ExportPanel.jsx` y la
   confirmación del resultado en `frontend/src/App.jsx` (RF-016)
+
+- [ ] T053 [US4] Implementar `frontend/src/components/ExplainabilityPreview.jsx` y
+  `frontend/src/components/EmotionBadge.jsx` como maquetas estáticas marcadas `Vista previa · no
+  disponible en este MVP`, sin consumo de endpoints ni datos de la entrevista (spec, "Fuera de
+  alcance")
 
 **Checkpoint**: flujo completo cargar → transcribir → editar → anotar → exportar operativo.
 
@@ -326,6 +353,8 @@ Task: "Pruebas de estado del reproductor en frontend/tests/AudioPlayer.test.jsx"
 - Cada tarea cabe en un solo archivo de código o de prueba
 - Las tareas de backend se ejecutan con `docker compose exec api pytest`
 - No se añaden dependencias fuera de `requirements.txt`, `requirements-dev.txt` y `package.json`
+- Las tareas T049–T054 se añadieron después de `contracts/ui.md`; por eso no siguen el orden numérico
+  dentro de su fase, aunque sí el orden de ejecución indicado por su posición
 - Fuera de alcance: historial de sesiones, autenticación, XAI, chatbot y multiusuario
 
 ## Matriz de cobertura RF → prueba

@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .api.errors import ApiError, install_error_handlers
+from .api.session import router as session_router
+from .api.transcription import router as transcription_router
 from .db import get_db, init_db
 from .models import CurrentSession
 from .services.session_store import (
@@ -42,6 +44,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(session_router)
+app.include_router(transcription_router)
 
 
 @app.get("/health")

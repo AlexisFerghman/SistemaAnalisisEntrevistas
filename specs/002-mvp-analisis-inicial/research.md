@@ -265,3 +265,27 @@ y `RF-016` excluyen. La copia descargada por el usuario sigue siendo el mecanism
 
 **Alternativas consideradas**: conservar la exportación indefinidamente (historial encubierto); una
 tabla por exportación (mismo problema con más estructura).
+
+## D25. `av` fijado en 16.1.0 por compatibilidad con faster-whisper 1.2.1
+
+**Decisión**: `av==16.1.0` y `python-multipart` como dependencias explícitas.
+
+**Razón**: `faster-whisper 1.2.1` llama a `av.open(..., metadata_errors="ignore")`, pero PyAV 17
+eliminó ese parámetro; con `av 19` la transcripción fallaba con
+`TypeError: open() got an unexpected keyword argument 'metadata_errors'`. La serie 15–16 lo conserva y
+publica ruedas `cp312` para Linux. `python-multipart` es obligatorio para recibir `multipart/form-data`.
+
+**Alternativas consideradas**: `av 14.4.0` (solo código fuente: exigía compilar FFmpeg en la imagen);
+monkeypatchear `av.open` para descartar el argumento (frágil ante otros cambios de API).
+
+## D26. La API se consume a través del proxy del frontend
+
+**Decisión**: todas las llamadas del navegador y de las pruebas manuales usan `http://localhost:5173`;
+Vite reenvía `/api` y `/health` a `http://api:8000`.
+
+**Razón**: `api` y `db` están solo en redes `internal: true`, y Docker no publica puertos de
+contenedores que no tienen una red externa. El frontend sí está en `external_conectividad`, así que es
+el único punto de entrada y mantiene el aislamiento del contenedor de la API (principio II).
+
+**Alternativas consideradas**: publicar `8000` (requiere dar al contenedor `api` una red con salida a
+internet, rompiendo el aislamiento); usar `docker compose exec` para cada prueba (incómodo).
