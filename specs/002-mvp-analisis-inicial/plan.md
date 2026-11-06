@@ -140,3 +140,22 @@ nuevo ni se modifica la topología de `docker-compose.yml`.
 | Modelo `base` precargado en la imagen (~150 MB extra) | El contenedor `api` no tiene egreso a red, así que no puede descargar pesos en tiempo de ejecución | Descarga en el primer arranque: imposible sin egreso; abrir egreso temporal: rompe el aislamiento |
 | Candado de concurrencia en memoria del proceso | Basta para un único worker de uvicorn con una sesión y un usuario | Candado en base de datos con bloqueo de fila: más robusto ante múltiples workers, innecesario para el despliegue actual |
 | Un solo worker de uvicorn | El estado de operación y el candado viven en el proceso; el modelo ocupa memoria una única vez | Múltiples workers: duplicaría el modelo en RAM y exigiría estado distribuido |
+
+## Evolución prevista
+
+La hoja de ruta completa para salir del prototipo de sesión única vive en
+[`specs/003-persistencia-jsonb-proyeccion/plan.md`](../003-persistencia-jsonb-proyeccion/plan.md),
+sección "Evolución prevista". En resumen, el orden acordado es:
+
+1. Enmienda mayor de la constitución (`1.0.0` → `2.0.0`) para sustituir el principio de sesión única
+   por sesiones múltiples con aislamiento por profesional y paciente.
+2. Normalización relacional de médicos, pacientes, sesiones, segmentos, palabras, anotaciones y
+   exportaciones, con integridad referencial.
+3. Autenticación y roles (`medico`, `administrador`).
+4. Row Level Security por médico y paciente, con roles de base de datos separados.
+5. Auditoría de solo inserción y política de retención.
+6. Migración por fases desde `current_session`/`current_export`, conservando el documento JSONB como
+   respaldo durante la validación.
+
+No se implementa nada de esto en `002` ni en `003`; solo se documenta para justificar por qué se
+mantiene PostgreSQL y por qué no se normaliza ahora.
