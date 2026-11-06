@@ -31,19 +31,23 @@ magnitud de la sesión real de ~12 min (144 818 bytes, 81 % en `words`).
 
 ## Comprobaciones de la Fase 5 (US3)
 
-La Fase 5 de `002` (`T032`–`T038`) debe cumplir, cuando se implemente:
+La Fase 5 de `002` (`T032`–`T038`), implementada con `backend/app/services/annotations.py` y
+`backend/app/api/annotations.py`:
 
-- [ ] Una sola sentencia `UPDATE` por operación de anotación.
-- [ ] Uso de `jsonb_set` o del operador `||` sobre `payload->'annotations'`.
-- [ ] Ninguna ruta de anotaciones llama a `get_document()` + `save_document()`.
-- [ ] Validación de pertenencia al segmento con consulta dirigida o `jsonb_path_exists`.
-- [ ] Sin tablas nuevas de anotaciones ni cambios en `docker-compose.yml`.
-- [ ] `status = reviewed` se actualiza en la misma sentencia.
+- [x] Una sola sentencia `UPDATE` por operación de anotación.
+- [x] Uso de `jsonb_set` o del operador `||` sobre `payload->'annotations'`.
+- [x] Ninguna ruta de anotaciones llama a `get_document()` + `save_document()`.
+- [x] Validación de pertenencia al segmento con consulta dirigida o `jsonb_path_exists`.
+- [x] Sin tablas nuevas de anotaciones ni cambios en `docker-compose.yml`.
+- [x] `status = reviewed` se actualiza en la misma sentencia.
 
-Verificación de esta entrega: no existe `backend/app/api/annotations.py` ni
-`backend/app/services/annotations.py`; la restricción queda fijada en
-`specs/003-persistencia-jsonb-proyeccion/contracts/annotations.md`. Los elementos quedan sin marcar
-porque pertenecen a la implementación futura de `T036`.
+Verificación de esta entrega: `grep -c "UPDATE current_session"` devuelve 3 (alta, edición y borrado,
+una por operación) y no hay ninguna referencia a `get_document`/`save_document` en las rutas de
+anotaciones. `git diff docker-compose.yml` no muestra cambios y la base sigue teniendo solo
+`current_session` y `current_export`.
+
+Suites tras la Fase 5: **102 pruebas de backend** (74 previas + 28 nuevas) y **12 de frontend**
+(7 previas + 5 nuevas).
 
 ## Evolución prevista (US4)
 

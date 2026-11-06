@@ -52,3 +52,31 @@ export async function updateTranscription(segments) {
   if (!response.ok) throw await parseError(response)
   return response.json()
 }
+
+export async function createAnnotation(payload) {
+  const response = await fetch(`${BASE}/api/session/annotations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) throw await parseError(response)
+  return response.json()
+}
+
+export async function updateAnnotation(annotationId, payload) {
+  const response = await fetch(`${BASE}/api/session/annotations/${annotationId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) throw await parseError(response)
+  return response.json()
+}
+
+export async function deleteAnnotation(annotationId) {
+  const response = await fetch(`${BASE}/api/session/annotations/${annotationId}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) throw await parseError(response)
+  return true
+}

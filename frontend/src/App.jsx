@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
+import AnnotationPanel from './components/AnnotationPanel'
 import AudioPlayer from './components/AudioPlayer'
 import NewInterviewModal from './components/NewInterviewModal'
 import TranscriptEditor from './components/TranscriptEditor'
 import TranscriptList from './components/TranscriptList'
 import WorkspaceLayout from './components/WorkspaceLayout'
-import { getSession, updateTranscription } from './services/api'
+import {
+  createAnnotation,
+  deleteAnnotation,
+  getSession,
+  updateAnnotation,
+  updateTranscription,
+} from './services/api'
 import { errorMessage } from './utils/errors'
 
 function EmptyState({ onNewInterview }) {
@@ -30,6 +37,7 @@ export default function App() {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editError, setEditError] = useState(null)
+  const [annotationSaving, setAnnotationSaving] = useState(false)
 
   const refresh = useCallback(async () => {
     const data = await getSession()
@@ -75,6 +83,46 @@ export default function App() {
     setNotice('La exportación se habilita en la fase de exportación del proyecto.')
   }
 
+  async function runAnnotation(action) {
+    setAnnotationSaving(true)
+    try {
+      await action()
+      await refresh()
+      setNotice(null)
+    } catch (problem) {
+      setNotice(errorMessage(problem))
+      throw problem
+    } finally {
+      setAnnotationSaving(false)
+    }
+  }
+
+  function handleCreateAnnotation(segmentId, text, startTime, endTime) {
+    return runAnnotation(() =>
+      createAnnotation({
+        text,
+        segment_id: segmentId,
+        start_time: startTime,
+        end_time: endTime,
+      }),
+    )
+  }
+
+  function handleUpdateAnnotation(annotationId, text, segmentId, startTime, endTime) {
+    return runAnnotation(() =>
+      updateAnnotation(annotationId, {
+        text,
+        segment_id: segmentId,
+        start_time: startTime,
+        end_time: endTime,
+      }),
+    )
+  }
+
+  function handleDeleteAnnotation(annotation) {
+    return runAnnotation(() => deleteAnnotation(annotation.id))
+  }
+
   const hasAudio = Boolean(session?.audio && session?.transcription)
   const segments = session?.transcription?.segments ?? []
 
@@ -105,29 +153,45 @@ export default function App() {
               onTimeUpdate={setCurrentTime}
             />
 
-            {editing ? (
-              <TranscriptEditor
-                segments={segments}
-                duration={session.audio.duration_seconds}
-                saving={saving}
-                error={editError}
-                onSave={handleSave}
-                onCancel={() => {
-                  setEditing(false)
-                  setEditError(null)
-                }}
-              />
-            ) : (
-              <TranscriptList
-                segments={segments}
-                currentTime={currentTime}
-                onSeek={handleSeek}
-                onStartEdit={() => {
-                  setEditing(true)
-                  setEditError(null)
-                }}
-              />
-            )}
+            <div className="workspace-grid">
+              <div className="workspace-grid__transcript">
+                {editing ? (
+                  <TranscriptEditor
+                    segments={segments}
+                    duration={session.audio.duration_seconds}
+                    saving={saving}
+                    error={editError}
+                    onSave={handleSave}
+                    onCancel={() => {
+                      setEditing(false)
+                      setEditError(null)
+                    }}
+                  />
+                ) : (
+                  <TranscriptList
+                    segments={segments}
+                    currentTime={currentTime}
+                    annotations={session.annotations ?? []}
+                    saving={annotationSaving}
+                    onSeek={handleSeek}
+                    onStartEdit={() => {
+                      setEditing(true)
+                      setEditError(null)
+                    }}
+                    onCreate={handleCreateAnnotation}
+                    onUpdate={handleUpdateAnnotation}
+                    onDelete={handleDeleteAnnotation}
+                  />
+                )}
+              </div>
+
+              <div className="workspace-grid__xai" aria-label="Explicabilidad local">
+                <h2 className="grid-title">EXPLICABILIDAD LOCAL</h2>
+                <p className="annotation-panel__empty">Vista previa · no disponible en este MVP</p>
+              </div>
+
+              <AnnotationPanel annotations={session.annotations ?? []} />
+            </div>
           </>
         ) : (
           <EmptyState onNewInterview={() => setModalOpen(true)} />

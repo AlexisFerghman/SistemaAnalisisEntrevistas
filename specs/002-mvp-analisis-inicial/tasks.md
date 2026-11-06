@@ -199,29 +199,29 @@ de 501 devuelve `422 annotation_too_long`; editar y eliminar no modifican el aud
 
 ### Tests de US3
 
-- [ ] T032 [P] [US3] Pruebas unitarias en `backend/tests/unit/test_annotations.py`: texto vacío, 1
+- [X] T032 [P] [US3] Pruebas unitarias en `backend/tests/unit/test_annotations.py`: texto vacío, 1
   carácter, 500 caracteres (acepta), 501 (rechaza), `segment_id` inexistente y rango fuera del segmento
   (RF-009, RF-010)
-- [ ] T033 [P] [US3] Pruebas de integración en `backend/tests/integration/test_annotations.py` para
+- [X] T033 [P] [US3] Pruebas de integración en `backend/tests/integration/test_annotations.py` para
   `POST`, `PUT` y `DELETE`, incluyendo `404 annotation_not_found` y `409 not_editable` (RF-009 a RF-011)
-- [ ] T034 [P] [US3] Prueba de componente en `frontend/tests/AnnotationForm.test.jsx`: contador de
+- [X] T034 [P] [US3] Prueba de componente en `frontend/tests/AnnotationForm.test.jsx`: contador de
   caracteres y bloqueo del envío al superar 500 (RF-010)
 
 ### Implementación de US3
 
-- [ ] T035 [US3] Crear `backend/app/services/annotations.py` con las reglas: texto entre 1 y 500
+- [X] T035 [US3] Crear `backend/app/services/annotations.py` con las reglas: texto entre 1 y 500
   caracteres Unicode, `segment_id` existente y rango contenido en el segmento referenciado (RF-009,
   RF-010, D19)
-- [ ] T036 [US3] Implementar `POST /api/session/annotations`, `PUT /api/session/annotations/{id}` y
+- [X] T036 [US3] Implementar `POST /api/session/annotations`, `PUT /api/session/annotations/{id}` y
   `DELETE /api/session/annotations/{id}` en `backend/app/api/annotations.py`, con `201`/`200`/`204`
   (RF-009, RF-010, RF-011)
-- [ ] T037 [US3] Crear `frontend/src/components/AnnotationList.jsx` y
+- [X] T037 [US3] Crear `frontend/src/components/AnnotationList.jsx` y
   `frontend/src/components/AnnotationForm.jsx`: crear desde el fragmento seleccionado, editar, eliminar
   y mostrar el vínculo con el timestamp (RF-009, RF-010, RF-011)
-- [ ] T038 [US3] Integrar anotaciones en `frontend/src/App.jsx`: selección de fragmento desde
+- [X] T038 [US3] Integrar anotaciones en `frontend/src/App.jsx`: selección de fragmento desde
   `TranscriptEditor` y listado sincronizado con el reproductor (RF-009)
 
-- [ ] T052 [US3] Implementar `frontend/src/components/AnnotationPanel.jsx` como placeholder de la
+- [X] T052 [US3] Implementar `frontend/src/components/AnnotationPanel.jsx` como placeholder de la
   columna 3 según `contracts/ui.md`: contadores en 0, botón `+` deshabilitado, estados vacíos y botón
   `Exportar JSON / CSV` deshabilitado (RF-009, RF-016)
 

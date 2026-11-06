@@ -6,6 +6,7 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.errors import ApiError, install_error_handlers
+from .api.annotations import router as annotations_router
 from .api.session import router as session_router
 from .api.transcription import router as transcription_router
 from .db import init_db
@@ -47,6 +48,7 @@ app.add_middleware(
 
 app.include_router(session_router)
 app.include_router(transcription_router)
+app.include_router(annotations_router)
 
 
 @app.get("/health")
