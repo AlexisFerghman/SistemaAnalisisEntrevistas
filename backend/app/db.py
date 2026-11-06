@@ -19,9 +19,10 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 
 def init_db() -> None:
-    from . import models
+    from . import migrations, models
 
     Base.metadata.create_all(bind=engine)
+    migrations.upgrade(engine)
 
 
 def get_db() -> Generator[Session, None, None]:

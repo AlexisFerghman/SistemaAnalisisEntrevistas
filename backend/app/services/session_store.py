@@ -6,6 +6,7 @@ una transcripción puede durar minutos y no debe retener una conexión del pool.
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 import threading
@@ -15,6 +16,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import SessionLocal
@@ -22,7 +24,6 @@ from ..models import CurrentExport, CurrentSession
 
 logger = logging.getLogger(__name__)
 
-CURRENT_SESSION_ID = "current"
 EXPORT_ID = "current"
 
 AUDIO_DIR = Path(os.getenv("AUDIO_DIR", "/data/audio"))
@@ -49,10 +50,26 @@ def _db() -> Iterator[Session]:
         db.close()
 
 
-def empty_document() -> dict[str, Any]:
+def _current_row(db: Session) -> CurrentSession | None:
+    """Devuelve la sesión vigente. Si hubiera más de una, la más reciente."""
+    return db.execute(
+        select(CurrentSession)
+        .order_by(CurrentSession.created_at.desc(), CurrentSession.id.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+
+
+def _prune_extra_rows(db: Session, keep: CurrentSession) -> None:
+    """Mantiene el invariante de una sola fila (principio III, RF-012)."""
+    for row in db.execute(select(CurrentSession)).scalars():
+        if row.id != keep.id:
+            db.delete(row)
+
+
+def empty_document(session_id: str | None = None) -> dict[str, Any]:
     return {
         "version": 1,
-        "session_id": "session-current",
+        "session_id": session_id or "",
         "status": "empty",
         "audio": None,
         "transcription": None,
@@ -67,30 +84,50 @@ def empty_document() -> dict[str, Any]:
 def ensure_current_session() -> None:
     """Crea la sesión vacía al arrancar si todavía no existe (RF-012)."""
     with _db() as db:
-        if db.get(CurrentSession, CURRENT_SESSION_ID) is None:
-            db.add(CurrentSession(id=CURRENT_SESSION_ID, payload=empty_document()))
-            db.commit()
-            logger.info("Sesión inicial creada con status=empty")
+        if _current_row(db) is not None:
+            return
+
+        row = CurrentSession(payload=empty_document())
+        db.add(row)
+        db.flush()
+        row.payload = empty_document(str(row.id))
+        db.commit()
+        logger.info("Sesión inicial creada con id=%s y status=empty", row.id)
 
 
 def get_document() -> dict[str, Any] | None:
     with _db() as db:
-        row = db.get(CurrentSession, CURRENT_SESSION_ID)
-        return None if row is None else row.payload
+        row = _current_row(db)
+        if row is None:
+            return None
+        document = copy.deepcopy(row.payload)
+        document["session_id"] = str(row.id)
+        return document
 
 
 def save_document(document: dict[str, Any]) -> dict[str, Any]:
     try:
         with _db() as db:
-            row = db.get(CurrentSession, CURRENT_SESSION_ID)
+            row = _current_row(db)
             if row is None:
-                db.add(CurrentSession(id=CURRENT_SESSION_ID, payload=document))
-            else:
-                row.payload = document
+                row = CurrentSession(payload=document)
+                db.add(row)
+                db.flush()
+
+            document["session_id"] = str(row.id)
+            row.payload = document
+            _prune_extra_rows(db, row)
             db.commit()
     except Exception as exc:  # pragma: no cover - depende de la base de datos
         raise PersistenceError(f"No se pudo guardar la sesión: {exc}") from exc
     return document
+
+
+def delete_document() -> None:
+    with _db() as db:
+        for row in db.execute(select(CurrentSession)).scalars():
+            db.delete(row)
+        db.commit()
 
 
 # --------------------------------------------------------------------------- operación activa

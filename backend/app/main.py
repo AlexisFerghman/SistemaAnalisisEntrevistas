@@ -2,20 +2,20 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Response
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 
 from .api.errors import ApiError, install_error_handlers
 from .api.session import router as session_router
 from .api.transcription import router as transcription_router
-from .db import get_db, init_db
-from .models import CurrentSession
+from .db import init_db
+from .services.session_projection import summarize_document
 from .services.session_store import (
-    CURRENT_SESSION_ID,
+    delete_document,
     ensure_current_session,
     get_document,
     reconcile_startup,
+    save_document,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -55,29 +55,26 @@ def health() -> dict[str, str]:
 
 
 @app.get("/api/session")
-def get_current_session() -> dict:
+def get_current_session(view: str = "summary") -> dict:
+    if view not in {"summary", "full"}:
+        raise ApiError(
+            "invalid_view",
+            "La vista debe ser 'summary' o 'full'",
+            422,
+        )
+
     document = get_document()
     if document is None:
         raise ApiError("session_not_initialized", "No hay una sesión cargada", 404)
-    return document
+    return summarize_document(document) if view == "summary" else document
 
 
 @app.put("/api/session")
-def save_current_session(payload: dict, db: Session = Depends(get_db)) -> dict:
-    session = db.get(CurrentSession, CURRENT_SESSION_ID)
-    if session is None:
-        session = CurrentSession(id=CURRENT_SESSION_ID, payload=payload)
-        db.add(session)
-    else:
-        session.payload = payload
-    db.commit()
-    return payload
+def save_current_session(payload: dict) -> dict:
+    return save_document(payload)
 
 
 @app.delete("/api/session", status_code=204)
-def delete_current_session(db: Session = Depends(get_db)) -> Response:
-    session = db.get(CurrentSession, CURRENT_SESSION_ID)
-    if session is not None:
-        db.delete(session)
-        db.commit()
+def delete_current_session() -> Response:
+    delete_document()
     return Response(status_code=204)

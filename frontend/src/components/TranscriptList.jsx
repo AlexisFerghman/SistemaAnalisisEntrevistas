@@ -35,7 +35,9 @@ export default function TranscriptList({ segments, currentTime = 0, onSeek, onSt
               </button>
             </div>
             <p className="segment__text">{segment.text}</p>
-            <p className="segment__words">{segment.words?.length ?? 0} palabras con marcas</p>
+            <p className="segment__words">
+              {segment.words_count ?? segment.words?.length ?? 0} palabras con marcas
+            </p>
           </li>
         ))}
       </ol>

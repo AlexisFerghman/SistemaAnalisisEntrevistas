@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 
-from ..services import audio_validation, session_store
+from ..services import audio_validation, session_projection, session_store
 from ..transcription import adapter
 from ..transcription.adapter import TranscriptionCancelled
 from .errors import ApiError
@@ -62,7 +62,7 @@ def upload_audio(file: UploadFile = File(...)) -> dict[str, Any]:
 
         new_document: dict[str, Any] = {
             "version": 1,
-            "session_id": "session-current",
+            "session_id": "",
             "status": "ready",
             "audio": {
                 "filename": file.filename,
@@ -110,6 +110,20 @@ def cancel_upload() -> JSONResponse:
         status_code=202,
         content={"status": "processing", "cancel_requested": True},
     )
+
+
+@router.get("/segments/{segment_id}/words")
+def get_segment_words(segment_id: str) -> dict[str, Any]:
+    """Devuelve solo las marcas por palabra del segmento solicitado (RF-021)."""
+    document = session_store.get_document()
+    if document is None:
+        raise ApiError("session_not_initialized", "No hay una sesión cargada", 404)
+
+    words = session_projection.segment_words(document, segment_id)
+    if words is None:
+        raise ApiError("segment_not_found", "El segmento no existe", 404)
+
+    return {"segment_id": segment_id, "words": words}
 
 
 @router.get("/audio")

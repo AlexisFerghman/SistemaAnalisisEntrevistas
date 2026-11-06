@@ -43,6 +43,22 @@ def test_edicion_sin_cambios_conserva_las_marcas_originales(client, monkeypatch)
     assert response.json()["transcription"]["segments"][0]["words"] == original_words
 
 
+def test_edicion_desde_resumen_conserva_las_palabras(client, monkeypatch):
+    """El editor envía solo id/texto/marcas; las palabras deben sobrevivir (RF-008, RF-020)."""
+    session = _upload(client, monkeypatch)
+    original_words = session["transcription"]["segments"][0]["words"]
+    summary_segments = [
+        {key: value for key, value in segment.items() if key != "words"}
+        for segment in session["transcription"]["segments"]
+    ]
+
+    response = client.put("/api/session/transcription", json={"segments": summary_segments})
+
+    assert response.status_code == 200
+    assert response.json()["transcription"]["segments"][0]["words"] == original_words
+
+
+
 def test_edicion_invalida_no_altera_el_documento(client, monkeypatch):
     session = _upload(client, monkeypatch)
     segments = session["transcription"]["segments"]

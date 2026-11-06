@@ -16,6 +16,14 @@ export async function getSession() {
   return response.json()
 }
 
+export async function getSegmentWords(segmentId) {
+  const response = await fetch(
+    `${BASE}/api/session/segments/${encodeURIComponent(segmentId)}/words`,
+  )
+  if (!response.ok) throw await parseError(response)
+  return response.json()
+}
+
 export async function uploadAudio(file) {
   const body = new FormData()
   body.append('file', file)

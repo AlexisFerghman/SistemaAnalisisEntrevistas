@@ -13,7 +13,7 @@ def _post(client, name="entrevista.wav", content=None, mime="audio/wav"):
 def _ready_document():
     return {
         "version": 1,
-        "session_id": "session-current",
+        "session_id": "",
         "status": "ready",
         "audio": {
             "filename": "anterior.wav",
