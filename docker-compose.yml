@@ -17,6 +17,18 @@ services:
     networks:
       - api_db
 
+  adminer:
+    image: adminer:4
+    command: ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/html"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - api_db
+      - external_conectivity
+
   api:
     build: ./backend
     environment:
