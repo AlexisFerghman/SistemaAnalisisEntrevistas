@@ -223,7 +223,7 @@ de 501 devuelve `422 annotation_too_long`; editar y eliminar no modifican el aud
 
 - [X] T052 [US3] Implementar `frontend/src/components/AnnotationPanel.jsx` como placeholder de la
   columna 3 según `contracts/ui.md`: contadores en 0, botón `+` deshabilitado, estados vacíos y botón
-  `Exportar JSON / CSV` deshabilitado (RF-009, RF-016)
+  `Exportar JSON ` deshabilitado (RF-009, RF-016)
 
 **Checkpoint**: las tres operaciones de anotación funcionan y respetan el límite de 500 caracteres.
 

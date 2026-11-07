@@ -234,7 +234,7 @@ Reglas:
   porque las etiquetas no existen y las observaciones no se agregan aquí).
 - Secciones `Etiquetas clínicas` y `Observaciones` con estado vacío:
   `Las observaciones se gestionan desde cada fragmento.`
-- Pie: botón `Exportar JSON / CSV` deshabilitado con `CSV próximamente`; la exportación real vive en
+- Pie: botón `Exportar JSON`; la exportación real vive en
   la cabecera y produce JSON.
 
 ## Inventario de componentes
@@ -286,6 +286,5 @@ Reglas:
 - Análisis afectivo real y probabilidades emocionales.
 - Explicabilidad XAI con datos reales.
 - Etiquetas clínicas como entidad propia.
-- Exportación CSV.
 - Autenticación, perfiles, roles, navegación entre sesiones e historial.
 - Múltiples hablantes y diarización.

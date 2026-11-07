@@ -59,9 +59,6 @@ export default function AnnotationPanel({
       >
         {exporting ? 'Exportando…' : 'Exportar JSON'}
       </button>
-      <p className="annotation-panel__empty annotation-panel__export-note">
-        CSV próximamente
-      </p>
     </aside>
   )
 }
