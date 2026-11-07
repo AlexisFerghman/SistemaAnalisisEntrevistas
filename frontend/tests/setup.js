@@ -19,3 +19,8 @@ Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', {
   writable: true,
   value: 0,
 })
+
+// jsdom no implementa PointerEvent: se usa MouseEvent para las pruebas de arrastre.
+if (typeof window.PointerEvent === 'undefined') {
+  window.PointerEvent = window.MouseEvent
+}

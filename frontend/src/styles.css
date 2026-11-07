@@ -683,6 +683,7 @@ button:disabled {
   background: #f8fafc;
   padding: 8px 10px;
   cursor: pointer;
+  touch-action: none;
 }
 
 .waveform:focus-visible {

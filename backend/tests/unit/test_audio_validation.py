@@ -95,3 +95,11 @@ def test_inspect_rejects_non_audio(tmp_path):
         av.inspect_audio(path)
 
     assert error.value.code == "invalid_audio"
+
+
+def test_content_length_detecta_exceso_sin_leer_el_cuerpo():
+    assert av.content_length_exceeded(None) is False
+    assert av.content_length_exceeded("") is False
+    assert av.content_length_exceeded("no-numerico") is False
+    assert av.content_length_exceeded(str(av.MAX_BYTES)) is False
+    assert av.content_length_exceeded(str(av.MAX_BYTES + 1)) is True

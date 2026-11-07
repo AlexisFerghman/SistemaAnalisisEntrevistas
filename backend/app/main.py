@@ -2,10 +2,10 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api.errors import ApiError, install_error_handlers
+from .api.errors import ApiError, UploadSizeLimitMiddleware, install_error_handlers
 from .api.annotations import router as annotations_router
 from .api.export import router as export_router
 from .api.session import router as session_router
@@ -13,11 +13,9 @@ from .api.transcription import router as transcription_router
 from .db import init_db
 from .services.session_projection import summarize_document
 from .services.session_store import (
-    delete_document,
     ensure_current_session,
     get_document,
     reconcile_startup,
-    save_document,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +37,7 @@ origin_regex = os.getenv(
     "CORS_ORIGIN_REGEX",
     r"^https?://(localhost|127\.0\.0\.1|172\.20\.\d+\.\d+)(:\d+)?$",
 )
+app.add_middleware(UploadSizeLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins or ["http://localhost:5173"],
@@ -71,14 +70,3 @@ def get_current_session(view: str = "summary") -> dict:
     if document is None:
         raise ApiError("session_not_initialized", "No hay una sesión cargada", 404)
     return summarize_document(document) if view == "summary" else document
-
-
-@app.put("/api/session")
-def save_current_session(payload: dict) -> dict:
-    return save_document(payload)
-
-
-@app.delete("/api/session", status_code=204)
-def delete_current_session() -> Response:
-    delete_document()
-    return Response(status_code=204)

@@ -230,12 +230,13 @@ Reglas:
 
 - Cabecera `Anotaciones` con botón `+` **deshabilitado** y tooltip `Disponible en una próxima
   iteración`.
-- Contadores `0 Etiquetas` y `0 Observaciones`, calculados del estado real (siempre 0 en el MVP
-  porque las etiquetas no existen y las observaciones no se agregan aquí).
+- Contadores de `Etiquetas` y `Observaciones`, calculados del estado real; en el MVP las etiquetas
+  siempre son 0 y las observaciones reflejan las anotaciones creadas desde cada fragmento.
 - Secciones `Etiquetas clínicas` y `Observaciones` con estado vacío:
   `Las observaciones se gestionan desde cada fragmento.`
-- Pie: botón `Exportar JSON`; la exportación real vive en
-  la cabecera y produce JSON.
+- Pie: botón `Exportar JSON` **habilitado** cuando la sesión está en `ready` o `reviewed` y
+  deshabilitado en el resto de estados. Exporta el mismo documento JSON que la cabecera y muestra
+  `CSV próximamente` como nota, ya que la exportación CSV no está implementada.
 
 ## Inventario de componentes
 
@@ -251,7 +252,7 @@ Reglas:
 | `TranscriptEditor` | `frontend/src/components/TranscriptEditor.jsx` | Edición de texto y marcas |
 | `AnnotationChip` | `frontend/src/components/AnnotationChip.jsx` | Anotación existente con editar/eliminar |
 | `AnnotationForm` | `frontend/src/components/AnnotationForm.jsx` | Alta y edición con límite de 500 |
-| `AnnotationPanel` | `frontend/src/components/AnnotationPanel.jsx` | Placeholder de la columna 3 |
+| `AnnotationPanel` | `frontend/src/components/AnnotationPanel.jsx` | Placeholder de la columna 3 y exportación JSON de respaldo |
 | `ExplainabilityPreview` | `frontend/src/components/ExplainabilityPreview.jsx` | Maqueta estática XAI |
 | `EmotionBadge` | `frontend/src/components/EmotionBadge.jsx` | Badge estático de emoción |
 | `ExportPanel` | `frontend/src/components/ExportPanel.jsx` | Acción de exportación JSON |

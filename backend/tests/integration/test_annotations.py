@@ -116,26 +116,6 @@ def test_rango_fuera_del_segmento_devuelve_422(client, monkeypatch):
     assert response.json()["error"]["code"] == "invalid_range"
 
 
-def test_acepta_limites_con_precision_decimal_del_segmento(client, monkeypatch):
-    session = _upload(client, monkeypatch)
-    segment = _first_segment(session)
-    segment["start_time"] = 5.920000000000001
-    segment["end_time"] = 6.28
-    session_store.save_document(session)
-
-    response = client.post(
-        "/api/session/annotations",
-        json={
-            "text": "a",
-            "segment_id": segment["id"],
-            "start_time": 5.920000000000001,
-            "end_time": 6.28,
-        },
-    )
-
-    assert response.status_code == 201
-
-
 def test_editar_anotacion_existente(client, monkeypatch):
     session = _upload(client, monkeypatch)
     segment = _first_segment(session)

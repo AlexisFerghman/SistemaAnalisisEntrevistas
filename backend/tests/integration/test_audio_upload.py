@@ -55,6 +55,41 @@ def test_formato_no_admitido_devuelve_415(client):
     assert response.json()["error"]["code"] == "unsupported_format"
 
 
+def test_sin_archivo_devuelve_400_missing_file(client):
+    response = client.post("/api/session/audio")
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "missing_file"
+
+
+def test_audio_ausente_marca_la_sesion_en_error(client):
+    document = _ready_document()
+    document["audio"]["storage_ref"] = "archivo-inexistente.wav"
+    session_store.save_document(document)
+
+    response = client.get("/api/session/audio")
+
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "audio_missing"
+
+    current = session_store.get_document()
+    assert current["status"] == "error"
+    assert current["audio"]["filename"] == "anterior.wav"
+    assert current["transcription"] == document["transcription"]
+    assert current["annotations"] == [{"id": "annotation-001", "text": "previa"}]
+
+
+def test_content_length_excedido_responde_413_sin_cargar_el_archivo(client):
+    response = client.post(
+        "/api/session/audio",
+        content=b"",
+        headers={"Content-Length": str(audio_validation.MAX_BYTES + 1)},
+    )
+
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "payload_too_large"
+
+
 def test_audio_ilegible_devuelve_422_y_conserva_la_sesion(client, monkeypatch):
     monkeypatch.setenv("TRANSCRIPTION_ENGINE", "fake")
     session_store.save_document(_ready_document())

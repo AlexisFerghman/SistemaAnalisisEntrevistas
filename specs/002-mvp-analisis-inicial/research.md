@@ -289,3 +289,15 @@ el único punto de entrada y mantiene el aislamiento del contenedor de la API (p
 
 **Alternativas consideradas**: publicar `8000` (requiere dar al contenedor `api` una red con salida a
 internet, rompiendo el aislamiento); usar `docker compose exec` para cada prueba (incómodo).
+
+## D27. Sin escritura directa del documento de sesión
+
+**Decisión**: eliminar `PUT /api/session` y `DELETE /api/session`. La sesión solo cambia mediante los
+endpoints funcionales: carga de audio, edición de transcripción, anotaciones y exportación.
+
+**Razón**: una escritura genérica permite saltarse las validaciones de timestamps, anotaciones y
+reemplazo atómico, y contradice el contrato HTTP. `GET /api/session` sigue siendo la única lectura
+directa.
+
+**Alternativas consideradas**: mantener las rutas para pruebas o herramientas internas (abre una vía de
+mutación no validada); restringirlas por entorno (complejidad innecesaria para un MVP de un usuario).

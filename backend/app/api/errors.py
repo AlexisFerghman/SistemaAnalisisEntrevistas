@@ -10,8 +10,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
 
-from ..services.audio_validation import AudioValidationError
+from ..services.audio_validation import AudioValidationError, content_length_exceeded
 from ..services.session_store import PersistenceError
 from ..transcription.adapter import (
     TranscriptionCancelled,
@@ -58,6 +59,20 @@ def error_response(
     if details:
         error["details"] = details
     return JSONResponse(status_code=status_code, content={"error": error})
+
+
+class UploadSizeLimitMiddleware(BaseHTTPMiddleware):
+    """Rechaza la carga antes de consumir el cuerpo cuando `Content-Length` excede el límite."""
+
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "POST" and request.url.path == "/api/session/audio":
+            if content_length_exceeded(request.headers.get("content-length")):
+                return error_response(
+                    413,
+                    "payload_too_large",
+                    "El archivo supera el límite de 120 MB",
+                )
+        return await call_next(request)
 
 
 def install_error_handlers(app: FastAPI) -> None:

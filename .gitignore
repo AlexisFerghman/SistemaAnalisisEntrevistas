@@ -23,3 +23,5 @@ data/audio/*
 fixtures/audio/*.wav
 fixtures/audio/*.mp3
 
+#archivos propios
+OPENCODE_COMMANDS.md

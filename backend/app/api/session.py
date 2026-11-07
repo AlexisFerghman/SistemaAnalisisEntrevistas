@@ -29,13 +29,25 @@ def _previous_status(document: dict[str, Any] | None) -> str:
     return "empty"
 
 
+def _mark_audio_error(document: dict[str, Any]) -> None:
+    """Conserva el documento para diagnóstico y lo deja en `error` (data-model.md)."""
+    document["status"] = "error"
+    session_store.save_document(document)
+
+
 @router.post("/audio")
-def upload_audio(file: UploadFile = File(...)) -> dict[str, Any]:
+def upload_audio(file: UploadFile | None = File(None)) -> dict[str, Any]:
     """Valida y transcribe en la misma petición (research D10, D11).
 
     Es una función síncrona: FastAPI la ejecuta en el threadpool y el event loop sigue
     atendiendo `/health` mientras dura la transcripción.
     """
+    if file is None:
+        raise audio_validation.AudioValidationError(
+            "missing_file",
+            "No se recibió ningún archivo",
+        )
+
     suffix = audio_validation.validate_upload(file.filename, file.content_type)
 
     tmp_path = session_store.AUDIO_DIR / f"{session_store.TMP_PREFIX}{uuid.uuid4().hex}{suffix}"
@@ -136,10 +148,12 @@ def get_audio(request: Request):
     audio = document["audio"]
     storage_ref = audio.get("storage_ref")
     if not storage_ref:
+        _mark_audio_error(document)
         raise ApiError("audio_missing", "El audio de la sesión no está registrado", 500)
 
     path = session_store.AUDIO_DIR / storage_ref
     if not path.is_file():
+        _mark_audio_error(document)
         raise ApiError("audio_missing", "El archivo de audio no existe en el almacenamiento", 500)
 
     media_type = audio.get("mime_type") or "application/octet-stream"

@@ -24,9 +24,10 @@ export async function getSegmentWords(segmentId) {
   return response.json()
 }
 
-export async function uploadAudio(file) {
+export async function uploadAudio(file, model = 'nube') {
   const body = new FormData()
   body.append('file', file)
+  body.append('model', model)
 
   const response = await fetch(`${BASE}/api/session/audio`, { method: 'POST', body })
   if (!response.ok) {

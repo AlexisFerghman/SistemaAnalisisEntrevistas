@@ -28,6 +28,16 @@ class AudioValidationError(Exception):
 GENERIC_TYPES = {"", "application/octet-stream", "binary/octet-stream"}
 
 
+def content_length_exceeded(content_length: str | None, max_bytes: int = MAX_BYTES) -> bool:
+    """Indica si el `Content-Length` declarado supera el límite sin leer el cuerpo."""
+    if not content_length:
+        return False
+    try:
+        return int(content_length) > max_bytes
+    except ValueError:
+        return False
+
+
 def validate_upload(filename: str | None, content_type: str | None) -> str:
     """Comprueba extensión y MIME declarado. Devuelve la extensión normalizada.
 

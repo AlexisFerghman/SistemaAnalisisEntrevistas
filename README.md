@@ -1,13 +1,14 @@
 # Sistema de análisis de entrevistas
 
-Prototipo experimental para transcribir y anotar entrevistas clínicas
-sintéticas. Esta versión no está destinada a entornos clínicos reales.
+Prototipo experimental para transcribir y anotar entrevistas clínicas **sintéticas**. Esta versión no
+está destinada a entornos clínicos reales.
 
-## Stack inicial
+## Stack
 
 - Frontend: React + JavaScript + Vite.
 - API: FastAPI + Python 3.12.
-- Persistencia: PostgreSQL 16.
+- Persistencia: PostgreSQL 16 con `payload` `jsonb` en `current_session` y `current_export`.
+- Transcripción: `faster-whisper` con el modelo `base`, en CPU con `int8` y GPU cuando está disponible.
 - Orquestación: Docker Compose.
 
 ## Arranque
@@ -20,36 +21,62 @@ docker compose up --build
 
 Servicios:
 
-- Frontend: http://localhost:5173
-- API: http://localhost:8000
-- API health: http://localhost:8000/health
-- PostgreSQL desde el host: `localhost:5433` (dentro de Docker: `db:5432`)
+- Interfaz y único punto de entrada HTTP: **http://localhost:5173**
+- API a través del proxy de Vite: `http://localhost:5173/api/...`
+- Healthcheck: `http://localhost:5173/health`
+- PostgreSQL dentro de Docker: `db:5432`; desde el host, `localhost:5433`
 
-La API inicial expone únicamente el estado del servicio y la sesión actual.
-La sesión es única y no hay autenticación en este prototipo.
+> `api` y `db` viven en redes `internal: true`. No publiques ni uses `http://localhost:8000` desde el
+> host: el frontend reenvía `/api` y `/health` a la API.
 
-### Lectura de la sesión
+## Modelo de transcripción
 
-- `GET /api/session` devuelve una vista **resumen**: audio, metadatos de transcripción y segmentos
-  sin el array `words`, con un contador `words_count` por segmento.
-- `GET /api/session?view=full` devuelve el documento completo, incluidas las marcas por palabra.
-- `GET /api/session/segments/{segment_id}/words` devuelve solo las palabras de un segmento.
-- `GET /api/session/audio` no cambia y sigue soportando peticiones `Range`.
-- La exportación sigue persistiendo el documento completo con `words` para cumplir `RF-016`.
+El contenedor `api` descarga el modelo `base` de `faster-whisper` **durante `docker build`** y lo deja
+en `HF_HOME=/opt/models`. En ejecución no necesita red: las redes `api_db` y `frontend_api` son
+internas. La primera transcripción reutiliza el modelo ya precargado; no se descarga nada al vuelo.
 
-### Persistencia
+## Endpoints reales
 
-`current_session.payload` y `current_export.payload` son `jsonb`. La sesión se identifica con un
-UUID y conserva `created_at`; el sistema sigue manteniendo una sola fila. La migración se aplica de
-forma idempotente al arrancar y su reverso está documentado en
-`specs/003-persistencia-jsonb-proyeccion/data-model.md`.
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/health` | Estado del servicio; responde incluso durante una transcripción |
+| GET | `/api/session` | Documento de la sesión en vista resumen (`words_count`, sin `words`) |
+| GET | `/api/session?view=full` | Documento completo, incluidas las marcas por palabra |
+| GET | `/api/session/audio` | Audio vigente; admite `Range` para reproducción |
+| POST | `/api/session/audio` | Carga y transcribe un `.mp3` o `.wav` de hasta 120 MB |
+| POST | `/api/session/cancel` | Cancelación cooperativa de la operación activa |
+| GET | `/api/session/segments/{id}/words` | Marcas por palabra de un segmento |
+| PUT | `/api/session/transcription` | Sustituye los segmentos corregidos |
+| POST | `/api/session/annotations` | Crea una anotación de 1 a 500 caracteres |
+| PUT | `/api/session/annotations/{id}` | Edita una anotación |
+| DELETE | `/api/session/annotations/{id}` | Elimina una anotación |
+| POST | `/api/session/export` | Persiste la sesión como JSON en la ranura única de exportación |
+
+No existen `PUT /api/session` ni `DELETE /api/session`: la sesión se modifica únicamente mediante los
+endpoints funcionales anteriores.
+
+La sesión es única (`session-current`, identificada por UUID). Una carga nueva reemplaza la anterior
+solo al confirmarse; los fallos y la cancelación conservan la sesión previa. La exportación se
+sobrescribe en `current_export` y se elimina al confirmar una sesión nueva. El documento exportado
+incluye `words` para cumplir `RF-016`.
+
+## Límites y datos
+
+- Audio `.mp3` o `.wav`, con MIME coherente y estructura legible.
+- Tamaño máximo: **120 MB** (`125 829 120` bytes).
+- Sin tope de duración, sin autenticación y sin historial de sesiones.
+- Solo datos ficticios o sintéticos; la interfaz muestra una advertencia permanente y exige
+  confirmación antes de analizar.
 
 ## Pruebas
 
 ```bash
-docker compose exec api pytest
-docker compose exec frontend npm test
+docker compose exec -T api pytest
+docker compose exec -T frontend npm test
 ```
+
+La validación manual de los 11 escenarios de `quickstart.md` está registrada en
+[`docs/validacion-mvp.md`](docs/validacion-mvp.md).
 
 ## Verificaciones locales sin Docker
 
@@ -58,6 +85,4 @@ python3 -m py_compile backend/app/*.py
 python3 -m json.tool frontend/package.json
 ```
 
-El MVP utiliza servicios locales aislados en Docker, admite audio `.mp3` y
-`.wav` de hasta 120 MB y persiste la exportación como JSON en PostgreSQL. El
-despliegue en un servidor cloud privado queda reservado para entregas finales.
+El despliegue en un servidor cloud privado queda reservado para entregas finales.

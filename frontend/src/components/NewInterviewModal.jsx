@@ -64,7 +64,7 @@ export default function NewInterviewModal({ onClose, onCompleted }) {
     setPhase('uploading')
     setError(null)
     try {
-      const session = await uploadAudio(file)
+      const session = await uploadAudio(file, model)
       setPhase('done')
       onCompleted(session)
     } catch (problem) {

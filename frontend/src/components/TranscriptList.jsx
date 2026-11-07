@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import AnnotationForm from './AnnotationForm'
 import AnnotationList from './AnnotationList'
 import EmotionBadge from './EmotionBadge'
@@ -16,9 +16,46 @@ export default function TranscriptList({
   onDelete,
 }) {
   const [form, setForm] = useState(null)
+  const listRef = useRef(null)
+  const lastManualScrollRef = useRef(0)
+  const autoScrollingRef = useRef(false)
+  const autoScrollTimerRef = useRef(null)
   const activeIndex = segments.findIndex(
     (segment) => currentTime >= segment.start_time && currentTime < segment.end_time,
   )
+
+  useEffect(() => {
+    const list = listRef.current
+    if (!list || activeIndex < 0) return
+    if (Date.now() - lastManualScrollRef.current < 5000) return
+
+    const item = list.children[activeIndex]
+    if (!item || typeof item.scrollIntoView !== 'function') return
+
+    autoScrollingRef.current = true
+    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    globalThis.clearTimeout(autoScrollTimerRef.current)
+    autoScrollTimerRef.current = globalThis.setTimeout(() => {
+      autoScrollingRef.current = false
+    }, 600)
+  }, [activeIndex])
+
+  useEffect(
+    () => () => {
+      globalThis.clearTimeout(autoScrollTimerRef.current)
+    },
+    [],
+  )
+
+  function handleScroll() {
+    if (!autoScrollingRef.current) {
+      lastManualScrollRef.current = Date.now()
+    }
+  }
+
+  function markManualScroll() {
+    lastManualScrollRef.current = Date.now()
+  }
 
   async function submit(text) {
     if (!form) return
@@ -54,7 +91,14 @@ export default function TranscriptList({
         </button>
       </header>
 
-      <ol className="segment-list">
+      <ol
+        className="segment-list"
+        ref={listRef}
+        onScroll={handleScroll}
+        onWheel={markManualScroll}
+        onTouchStart={markManualScroll}
+        onPointerDown={markManualScroll}
+      >
         {segments.map((segment, index) => {
           const segmentAnnotations = annotations.filter(
             (annotation) => annotation.segment_id === segment.id,

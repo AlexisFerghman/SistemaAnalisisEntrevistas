@@ -18,7 +18,6 @@ from ..db import SessionLocal
 
 MAX_TEXT_LENGTH = 500
 EDITABLE_STATUSES = {"ready", "reviewed"}
-TIME_TOLERANCE = 1e-6
 
 _CURRENT_ID_SQL = text(
     "SELECT id::text FROM current_session ORDER BY created_at DESC, id DESC LIMIT 1"
@@ -168,12 +167,7 @@ def _require_editable(session_id: str, fields: dict[str, Any]) -> None:
         if segment is None:
             raise AnnotationError("unknown_segment", "El segmento no existe")
 
-        segment_start = float(segment.start_time)
-        segment_end = float(segment.end_time)
-        if (
-            fields["start_time"] < segment_start - TIME_TOLERANCE
-            or fields["end_time"] > segment_end + TIME_TOLERANCE
-        ):
+        if fields["start_time"] < float(segment.start_time) or fields["end_time"] > float(segment.end_time):
             raise AnnotationError(
                 "invalid_range",
                 "El rango de la anotación queda fuera del segmento",

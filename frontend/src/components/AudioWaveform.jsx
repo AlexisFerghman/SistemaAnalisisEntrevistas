@@ -1,15 +1,50 @@
+import { useRef } from 'react'
 import { formatTime } from '../utils/format'
 
 const TICKS = [0, 0.25, 0.5, 0.75, 1]
 
 export default function AudioWaveform({ peaks, duration, currentTime = 0, markers = [], onSeek }) {
   const progress = duration > 0 ? Math.min(Math.max(currentTime / duration, 0), 1) : 0
+  const draggingRef = useRef(false)
+  const suppressClickRef = useRef(false)
 
   function seekFromEvent(event) {
     const rect = event.currentTarget.getBoundingClientRect()
     if (rect.width === 0) return
     const ratio = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1)
     onSeek?.(ratio * duration)
+  }
+
+  function handlePointerDown(event) {
+    if (event.button !== undefined && event.button !== 0) return
+    draggingRef.current = true
+    suppressClickRef.current = true
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    seekFromEvent(event)
+  }
+
+  function handlePointerMove(event) {
+    if (!draggingRef.current) return
+    seekFromEvent(event)
+  }
+
+  function handlePointerUp(event) {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    seekFromEvent(event)
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+  }
+
+  function handlePointerCancel() {
+    draggingRef.current = false
+  }
+
+  function handleClick(event) {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
+    seekFromEvent(event)
   }
 
   function handleKeyDown(event) {
@@ -40,7 +75,11 @@ export default function AudioWaveform({ peaks, duration, currentTime = 0, marker
         aria-valuemax={Math.round(duration)}
         aria-valuenow={Math.round(currentTime)}
         aria-valuetext={formatTime(currentTime)}
-        onClick={seekFromEvent}
+        onClick={handleClick}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         onKeyDown={handleKeyDown}
       >
         <div className="waveform__bars" aria-hidden="true">

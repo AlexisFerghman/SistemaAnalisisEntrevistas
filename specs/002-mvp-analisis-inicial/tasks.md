@@ -264,17 +264,17 @@ contiene audio o metadatos, transcripción corregida, marcas de tiempo y anotaci
 
 **Propósito**: alinear el contrato, verificar cobertura y dejar el proyecto reproducible.
 
-- [ ] T043 Eliminar `PUT /api/session` de `backend/app/main.py` y dejar solo `GET /api/session`
+- [X] T043 Eliminar `PUT /api/session` de `backend/app/main.py` y dejar solo `GET /api/session`
   (D27, `contracts/api.md`)
-- [ ] T044 [P] Revisar que `backend/app/main.py` mantiene CORS restringido a `CORS_ORIGINS` y que
+- [X] T044 [P] Revisar que `backend/app/main.py` mantiene CORS restringido a `CORS_ORIGINS` y que
   `PUT`/`DELETE` no quedaron huérfanos en `contracts/api.md` (RNF-001, RNF-002)
-- [ ] T045 [P] Ejecutar los 11 escenarios de `quickstart.md` y registrar el resultado en
+- [X] T045 [P] Ejecutar los 11 escenarios de `quickstart.md` y registrar el resultado en
   `docs/validacion-mvp.md` (RF-001 a RF-016)
-- [ ] T046 [P] Actualizar `README.md`: endpoints reales, comandos de prueba
+- [X] T046 [P] Actualizar `README.md`: endpoints reales, comandos de prueba
   (`docker compose exec api pytest`, `npm test`), precarga del modelo y límite de 120 MB (RNF-005)
-- [ ] T047 [P] Añadir la matriz de cobertura RF → prueba al final de `specs/002-mvp-analisis-inicial/tasks.md`
+- [X] T047 [P] Añadir la matriz de cobertura RF → prueba al final de `specs/002-mvp-analisis-inicial/tasks.md`
   verificando que RF-001…RF-016 y RNF-001…RNF-005 tienen al menos una prueba (RNF-005)
-- [ ] T048 Verificar el criterio de aceptación global de `quickstart.md`: los escenarios de fallo y
+- [X] T048 Verificar el criterio de aceptación global de `quickstart.md`: los escenarios de fallo y
   cancelación conservan la sesión anterior y el reemplazo deja una única sesión (RF-012 a RF-015)
 
 ---
@@ -373,3 +373,34 @@ Task: "Pruebas de estado del reproductor en frontend/tests/AudioPlayer.test.jsx"
 | RNF-003 | T022, T048 |
 | RNF-004 | T017, T025, T030 |
 | RNF-005 | T046, T047 |
+
+> **Verificación T047 (2026-11-07)**: `RF-001`…`RF-016` y `RNF-001`…`RNF-005` tienen al menos una
+> tarea de prueba asociada. Los escenarios manuales de la Fase 7 están registrados en
+> [`docs/validacion-mvp.md`](../../docs/validacion-mvp.md).
+
+---
+
+## Phase 8: Convergence
+
+- [X] T055 Devolver `400 missing_file` cuando `POST /api/session/audio` no recibe el campo `file`,
+  en lugar del `422 validation_error` genérico de FastAPI, en `backend/app/api/session.py` per
+  `contracts/api.md` (partial)
+- [X] T056 Persistir `status: "error"` conservando el documento cuando
+  `GET /api/session/audio` detecta que `storage_ref` apunta a un archivo inexistente, y devolver
+  después `500 audio_missing`, en `backend/app/api/session.py` per `contracts/api.md` (missing)
+- [X] T057 Alinear `contracts/ui.md` con el botón funcional de exportación JSON de
+  `frontend/src/components/AnnotationPanel.jsx`: documentar el comportamiento actual o restaurar el
+  placeholder deshabilitado, sin dejar el contrato contradictorio per `contracts/ui.md` (contradicts)
+- [X] T058 Enviar la selección de modelo como campo `model=nube` en la petición de
+  `frontend/src/services/api.js` desde `frontend/src/components/NewInterviewModal.jsx`, dejando que
+  el backend lo ignore como indica el contrato per `contracts/ui.md` (missing)
+- [X] T059 Rechazar con `413 payload_too_large` antes de consumir el cuerpo cuando `Content-Length`
+  supere los 120 MB, manteniendo el corte por bloques como respaldo, en
+  `backend/app/api/session.py` y `backend/app/services/audio_validation.py` per `contracts/api.md`
+  (partial)
+- [X] T060 Implementar en `frontend/src/components/TranscriptList.jsx` el scroll suave al segmento
+  activo, desactivado durante 5 s después de un desplazamiento manual del usuario, per
+  `contracts/ui.md` (missing)
+- [X] T061 Añadir arrastre con puntero para hacer `seek` en
+  `frontend/src/components/AudioWaveform.jsx`, además del clic y del teclado ya existentes, per
+  `contracts/ui.md` (missing)
