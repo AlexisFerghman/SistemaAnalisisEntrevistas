@@ -1,4 +1,9 @@
-export default function AnnotationPanel({ annotations = [] }) {
+export default function AnnotationPanel({
+  annotations = [],
+  onExport,
+  exporting = false,
+  canExport = false,
+}) {
   const observations = annotations.length
 
   return (
@@ -41,9 +46,22 @@ export default function AnnotationPanel({ annotations = [] }) {
         </p>
       </section>
 
-      <button type="button" className="button button--dark annotation-panel__export" disabled>
-        Exportar JSON / CSV
+      <button
+        type="button"
+        className="button button--dark annotation-panel__export"
+        onClick={onExport}
+        disabled={!canExport || exporting}
+        title={
+          canExport
+            ? 'Exportar la sesión como JSON'
+            : 'Disponible al completar el análisis'
+        }
+      >
+        {exporting ? 'Exportando…' : 'Exportar JSON'}
       </button>
+      <p className="annotation-panel__empty annotation-panel__export-note">
+        CSV próximamente
+      </p>
     </aside>
   )
 }

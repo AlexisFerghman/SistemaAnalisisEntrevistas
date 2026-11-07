@@ -7,6 +7,7 @@ const MESSAGES = {
   cancelled: 'Análisis cancelado. Se conservó la sesión anterior.',
   transcription_unavailable: 'El servicio de transcripción no está disponible. Inténtalo de nuevo.',
   persistence_error: 'No se pudo guardar la sesión. Se conservó la anterior.',
+  session_not_ready: 'La sesión todavía no tiene una transcripción confirmada.',
 }
 
 export function errorMessage(error) {

@@ -80,3 +80,9 @@ export async function deleteAnnotation(annotationId) {
   if (!response.ok) throw await parseError(response)
   return true
 }
+
+export async function exportSession() {
+  const response = await fetch(`${BASE}/api/session/export`, { method: 'POST' })
+  if (!response.ok) throw await parseError(response)
+  return response.json()
+}

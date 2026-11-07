@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AnnotationForm from './AnnotationForm'
 import AnnotationList from './AnnotationList'
+import EmotionBadge from './EmotionBadge'
 import { formatTime } from '../utils/format'
 
 export default function TranscriptList({
@@ -75,6 +76,7 @@ export default function TranscriptList({
                 >
                   {formatTime(segment.start_time)}
                 </button>
+                <EmotionBadge />
               </div>
 
               <p className="segment__text">{segment.text}</p>

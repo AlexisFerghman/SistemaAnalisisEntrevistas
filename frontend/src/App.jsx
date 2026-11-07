@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import AnnotationPanel from './components/AnnotationPanel'
 import AudioPlayer from './components/AudioPlayer'
+import ExplainabilityPreview from './components/ExplainabilityPreview'
 import NewInterviewModal from './components/NewInterviewModal'
 import TranscriptEditor from './components/TranscriptEditor'
 import TranscriptList from './components/TranscriptList'
@@ -8,11 +9,32 @@ import WorkspaceLayout from './components/WorkspaceLayout'
 import {
   createAnnotation,
   deleteAnnotation,
+  exportSession,
   getSession,
   updateAnnotation,
   updateTranscription,
 } from './services/api'
 import { errorMessage } from './utils/errors'
+
+function downloadJson(payload) {
+  if (
+    typeof window === 'undefined' ||
+    typeof URL === 'undefined' ||
+    typeof URL.createObjectURL !== 'function'
+  ) {
+    return
+  }
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = window.document.createElement('a')
+  link.href = url
+  link.download = 'sesion-exportada.json'
+  window.document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
 
 function EmptyState({ onNewInterview }) {
   return (
@@ -38,6 +60,7 @@ export default function App() {
   const [saving, setSaving] = useState(false)
   const [editError, setEditError] = useState(null)
   const [annotationSaving, setAnnotationSaving] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   const refresh = useCallback(async () => {
     const data = await getSession()
@@ -79,8 +102,18 @@ export default function App() {
     }
   }
 
-  function handleExport() {
-    setNotice('La exportación se habilita en la fase de exportación del proyecto.')
+  async function handleExport() {
+    setExporting(true)
+    setNotice(null)
+    try {
+      const result = await exportSession()
+      downloadJson(result.document)
+      setNotice('Sesión exportada correctamente. El documento JSON se guardó en la ranura de exportación.')
+    } catch (problem) {
+      setNotice(errorMessage(problem))
+    } finally {
+      setExporting(false)
+    }
   }
 
   async function runAnnotation(action) {
@@ -124,6 +157,7 @@ export default function App() {
   }
 
   const hasAudio = Boolean(session?.audio && session?.transcription)
+  const canExport = session?.status === 'ready' || session?.status === 'reviewed'
   const segments = session?.transcription?.segments ?? []
 
   return (
@@ -132,6 +166,7 @@ export default function App() {
         session={session}
         onNewInterview={() => setModalOpen(true)}
         onExport={handleExport}
+        exporting={exporting}
       >
         {notice && (
           <p className="notice" role="status">
@@ -185,12 +220,14 @@ export default function App() {
                 )}
               </div>
 
-              <div className="workspace-grid__xai" aria-label="Explicabilidad local">
-                <h2 className="grid-title">EXPLICABILIDAD LOCAL</h2>
-                <p className="annotation-panel__empty">Vista previa · no disponible en este MVP</p>
-              </div>
+              <ExplainabilityPreview />
 
-              <AnnotationPanel annotations={session.annotations ?? []} />
+              <AnnotationPanel
+                annotations={session.annotations ?? []}
+                onExport={handleExport}
+                exporting={exporting}
+                canExport={canExport}
+              />
             </div>
           </>
         ) : (

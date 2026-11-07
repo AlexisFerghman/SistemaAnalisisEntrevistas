@@ -1,3 +1,4 @@
+import ExportPanel from './ExportPanel'
 import { formatTime, statusLabel } from '../utils/format'
 
 const STATUS_CLASS = {
@@ -9,7 +10,12 @@ const STATUS_CLASS = {
   error: 'badge badge--error',
 }
 
-export default function WorkspaceHeader({ session, onNewInterview, onExport }) {
+export default function WorkspaceHeader({
+  session,
+  onNewInterview,
+  onExport,
+  exporting = false,
+}) {
   const status = session?.status ?? 'empty'
   const audio = session?.audio
   const subtitle = audio
@@ -41,15 +47,7 @@ export default function WorkspaceHeader({ session, onNewInterview, onExport }) {
         <button type="button" className="button button--ghost" onClick={onNewInterview}>
           <span aria-hidden="true">+</span> Nueva entrevista
         </button>
-        <button
-          type="button"
-          className="button button--dark"
-          onClick={onExport}
-          disabled={!canExport}
-          title={canExport ? 'Exportar la sesión' : 'Disponible al completar el análisis'}
-        >
-          <span aria-hidden="true">↓</span> Exportar datos
-        </button>
+        <ExportPanel onExport={onExport} disabled={!canExport} exporting={exporting} />
 
         <div className="profile">
           <span className="profile__avatar" aria-hidden="true">PS</span>

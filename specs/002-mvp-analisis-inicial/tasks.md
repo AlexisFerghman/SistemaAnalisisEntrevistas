@@ -238,20 +238,20 @@ contiene audio o metadatos, transcripción corregida, marcas de tiempo y anotaci
 
 ### Tests de US4
 
-- [ ] T039 [P] [US4] Prueba de contrato en `backend/tests/contract/test_export.py`: documento con y sin
+- [X] T039 [P] [US4] Prueba de contrato en `backend/tests/contract/test_export.py`: documento con y sin
   anotaciones, transcripción parcialmente editada, `409 session_not_ready` y eliminación de la
   exportación anterior al confirmar una sesión nueva (RF-016, D24)
 
 ### Implementación de US4
 
-- [ ] T040 [US4] Crear `backend/app/services/export.py` que consolide la sesión vigente en el documento
+- [X] T040 [US4] Crear `backend/app/services/export.py` que consolide la sesión vigente en el documento
   exportable y lo persista en `current_export`, sobrescribiendo la ranura única (RF-016, D24)
-- [ ] T041 [US4] Implementar `POST /api/session/export` en `backend/app/api/export.py`: `201` con
+- [X] T041 [US4] Implementar `POST /api/session/export` en `backend/app/api/export.py`: `201` con
   `{exported_at, document}` o `409 session_not_ready` (RF-016)
-- [ ] T042 [US4] Añadir el botón de exportación en `frontend/src/components/ExportPanel.jsx` y la
+- [X] T042 [US4] Añadir el botón de exportación en `frontend/src/components/ExportPanel.jsx` y la
   confirmación del resultado en `frontend/src/App.jsx` (RF-016)
 
-- [ ] T053 [US4] Implementar `frontend/src/components/ExplainabilityPreview.jsx` y
+- [X] T053 [US4] Implementar `frontend/src/components/ExplainabilityPreview.jsx` y
   `frontend/src/components/EmotionBadge.jsx` como maquetas estáticas marcadas `Vista previa · no
   disponible en este MVP`, sin consumo de endpoints ni datos de la entrevista (spec, "Fuera de
   alcance")
