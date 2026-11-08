@@ -73,6 +73,27 @@ describe('AudioPlayer', () => {
     expect(onTimeUpdate).toHaveBeenCalledWith(6)
   })
 
+  it('hace seek y reproduce con una solicitud de play', () => {
+    const onTimeUpdate = vi.fn()
+    HTMLMediaElement.prototype.play.mockClear()
+    const { rerender } = renderPlayer({ onTimeUpdate })
+
+    rerender(
+      <AudioPlayer
+        src="/api/session/audio"
+        duration={10}
+        currentTime={0}
+        segments={SEGMENTS}
+        annotations={[]}
+        onTimeUpdate={onTimeUpdate}
+        playRequest={{ time: 4, id: 1 }}
+      />,
+    )
+
+    expect(onTimeUpdate).toHaveBeenCalledWith(4)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalled()
+  })
+
   it('muestra el tiempo actual y la duración', () => {
     renderPlayer({ currentTime: 90, duration: 120 })
 

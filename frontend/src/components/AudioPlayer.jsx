@@ -5,7 +5,7 @@ import { formatTime } from '../utils/format'
 const SPEEDS = [1, 1.25, 1.5]
 const BAR_COUNT = 220
 
-function usePeaks(src) {
+function usePeaks(src, cacheKey) {
   const [peaks, setPeaks] = useState(null)
 
   useEffect(() => {
@@ -16,7 +16,10 @@ function usePeaks(src) {
     let context
     const load = async () => {
       try {
-        const response = await fetch(src)
+        const separator = src.includes('?') ? '&' : '?'
+        const response = await fetch(
+          `${src}${separator}v=${encodeURIComponent(cacheKey ?? '')}`,
+        )
         const buffer = await response.arrayBuffer()
         context = new AudioCtx()
         const decoded = await context.decodeAudioData(buffer)
@@ -43,7 +46,7 @@ function usePeaks(src) {
     return () => {
       cancelled = true
     }
-  }, [src])
+  }, [src, cacheKey])
 
   return peaks
 }
@@ -55,12 +58,15 @@ export default function AudioPlayer({
   segments = [],
   annotations = [],
   seekRequest = null,
+  playRequest = null,
   onTimeUpdate,
+  onRevealSegment,
+  visualSeed = '',
 }) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
-  const peaks = usePeaks(src)
+  const peaks = usePeaks(src, visualSeed)
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = speed
@@ -72,10 +78,19 @@ export default function AudioPlayer({
     onTimeUpdate?.(seekRequest.time)
   }, [seekRequest, onTimeUpdate])
 
+  useEffect(() => {
+    if (!playRequest || !audioRef.current) return
+    const target = Math.min(Math.max(playRequest.time, 0), duration || 0)
+    audioRef.current.currentTime = target
+    onTimeUpdate?.(target)
+    audioRef.current.play?.().catch(() => setPlaying(false))
+  }, [playRequest, duration, onTimeUpdate])
+
   const markers = annotations.map((annotation) => ({
     id: annotation.id,
     time: annotation.start_time ?? 0,
     text: annotation.text,
+    segmentId: annotation.segment_id,
     type: 'observacion',
   }))
 
@@ -134,6 +149,8 @@ export default function AudioPlayer({
         currentTime={currentTime}
         markers={markers}
         onSeek={seek}
+        onRevealSegment={onRevealSegment}
+        visualSeed={visualSeed}
       />
 
       <div className="player-controls">

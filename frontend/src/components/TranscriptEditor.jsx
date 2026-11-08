@@ -55,14 +55,14 @@ export default function TranscriptEditor({ segments, duration = 0, saving, error
       <header className="section-header">
         <div>
           <h2>EDITANDO TRANSCRIPCIÓN</h2>
-          <p>{draft.length} segmentos · Español</p>
+          <p>{draft.length} segmentos · Texto completo · Español</p>
         </div>
       </header>
 
       <form onSubmit={handleSubmit} className="editor">
-        <ol className="segment-list">
+        <ol className="segment-list editor__flow">
           {draft.map((segment, index) => (
-            <li key={segment.id} className="segment segment--editing">
+            <li key={segment.id} className="segment segment--editing editor-block" data-testid="editor-block">
               <div className="segment__meta">
                 <span className="segment__time">{formatTime(segment.start_time)}</span>
               </div>

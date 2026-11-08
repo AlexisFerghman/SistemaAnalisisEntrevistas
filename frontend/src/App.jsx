@@ -56,6 +56,8 @@ export default function App() {
   const [notice, setNotice] = useState(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [seekRequest, setSeekRequest] = useState(null)
+  const [playRequest, setPlayRequest] = useState(null)
+  const [revealRequest, setRevealRequest] = useState(null)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editError, setEditError] = useState(null)
@@ -79,12 +81,23 @@ export default function App() {
     setSeekRequest({ time, id: Date.now() })
   }, [])
 
+  const handlePlayFrom = useCallback((time) => {
+    setCurrentTime(time)
+    setPlayRequest({ time, id: Date.now() })
+  }, [])
+
+  const handleRevealSegment = useCallback((segmentId) => {
+    setRevealRequest({ segmentId, id: Date.now() })
+  }, [])
+
   function handleCompleted(nextSession) {
     setSession(nextSession)
     setModalOpen(false)
     setNotice(null)
     setCurrentTime(0)
     setSeekRequest(null)
+    setPlayRequest(null)
+    setRevealRequest(null)
     setEditing(false)
   }
 
@@ -185,7 +198,10 @@ export default function App() {
               segments={segments}
               annotations={session.annotations ?? []}
               seekRequest={seekRequest}
+              playRequest={playRequest}
               onTimeUpdate={setCurrentTime}
+              onRevealSegment={handleRevealSegment}
+              visualSeed={session.session_id || session.audio?.storage_ref || 'session'}
             />
 
             <div className="workspace-grid">
@@ -208,7 +224,9 @@ export default function App() {
                     currentTime={currentTime}
                     annotations={session.annotations ?? []}
                     saving={annotationSaving}
+                    revealRequest={revealRequest}
                     onSeek={handleSeek}
+                    onPlay={handlePlayFrom}
                     onStartEdit={() => {
                       setEditing(true)
                       setEditError(null)

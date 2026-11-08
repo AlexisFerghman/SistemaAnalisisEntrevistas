@@ -336,6 +336,57 @@ button:disabled {
   color: var(--muted);
 }
 
+.transcript__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.transcript-flow {
+  max-height: min(72vh, 760px);
+  overflow-y: auto;
+  padding-right: 4px;
+  scroll-behavior: smooth;
+}
+
+.transcript-flow .segment {
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  padding: 16px 10px;
+}
+
+.transcript-flow .segment--active {
+  border-left-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.segment__play {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--primary);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.segment__play:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transcript-flow {
+    scroll-behavior: auto;
+  }
+}
+
 .segment-list {
   list-style: none;
   margin: 0;
@@ -720,6 +771,7 @@ button:disabled {
 
 .waveform__marker {
   position: absolute;
+  left: 0;
   bottom: 4px;
   width: 10px;
   height: 10px;
@@ -728,6 +780,131 @@ button:disabled {
   padding: 0;
   transform: translateX(-50%);
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+}
+
+.waveform__marker-wrap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+}
+
+.waveform__marker-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.observation-popover {
+  position: absolute;
+  bottom: 26px;
+  z-index: 30;
+  width: min(300px, 70vw);
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  cursor: default;
+}
+
+.observation-popover--center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.observation-popover--left {
+  left: 0;
+}
+
+.observation-popover--right {
+  left: auto;
+  right: 0;
+}
+
+.observation-popover__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.observation-popover__close {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.observation-popover__close:hover {
+  background: #e2e8f0;
+}
+
+.observation-popover__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.observation-popover__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.observation-popover__item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.observation-popover__content {
+  min-width: 0;
+}
+
+.observation-popover__time {
+  font-size: 11px;
+  font-weight: 700;
+  color: #b45309;
+  font-variant-numeric: tabular-nums;
+}
+
+.observation-popover__text {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #334155;
+  overflow-wrap: anywhere;
+}
+
+.observation-popover__reveal {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .waveform__marker--observacion {
@@ -820,6 +997,30 @@ button:disabled {
 .transcript--editing .segment--editing {
   border-color: #c7d2fe;
   background: #fbfdff;
+}
+
+.editor__flow {
+  max-height: min(72vh, 760px);
+  overflow-y: auto;
+  padding-right: 4px;
+  gap: 0;
+}
+
+.editor-block {
+  border: none;
+  border-left: 3px solid #c7d2fe;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 16px 14px;
+}
+
+.editor-block:last-child {
+  border-bottom: none;
+}
+
+.editor-block .segment__time {
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 .editor__text {
