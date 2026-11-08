@@ -13,6 +13,14 @@ def _upload(client, monkeypatch, seconds=8.0):
     return response.json()["session"]
 
 
+def _audio_digest() -> str:
+    import hashlib
+
+    return hashlib.sha256(
+        (session_store.AUDIO_DIR / "current.wav").read_bytes()
+    ).hexdigest()
+
+
 def test_edicion_valida_marca_la_sesion_como_revisada(client, monkeypatch):
     session = _upload(client, monkeypatch)
     segments = session["transcription"]["segments"]
@@ -41,6 +49,22 @@ def test_edicion_sin_cambios_conserva_las_marcas_originales(client, monkeypatch)
 
     assert response.status_code == 200
     assert response.json()["transcription"]["segments"][0]["words"] == original_words
+
+
+def test_edicion_no_modifica_el_audio_original(client, monkeypatch):
+    session = _upload(client, monkeypatch)
+    before = _audio_digest()
+    segments = session["transcription"]["segments"]
+    segments[0]["text"] = "Texto corregido por el profesional."
+
+    response = client.put("/api/session/transcription", json={"segments": segments})
+
+    assert response.status_code == 200
+    assert response.json()["transcription"]["segments"][0]["text"] == (
+        "Texto corregido por el profesional."
+    )
+    assert _audio_digest() == before
+    assert response.json()["transcription"]["provider"] == "fake"
 
 
 def test_edicion_desde_resumen_conserva_las_palabras(client, monkeypatch):

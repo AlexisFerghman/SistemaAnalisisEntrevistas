@@ -4,6 +4,7 @@ import time
 import httpx
 
 from app.main import app
+from app.services import session_store
 
 from ..helpers import wav_bytes
 
@@ -58,3 +59,4 @@ def test_cancelacion_conserva_la_sesion_anterior(monkeypatch):
     assert upload.status_code == 409
     assert upload.json()["error"]["code"] == "cancelled"
     assert upload.json()["session"]["status"] == "empty"
+    assert list(session_store.AUDIO_DIR.glob(f"{session_store.TMP_PREFIX}*")) == []

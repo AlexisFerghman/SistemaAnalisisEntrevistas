@@ -235,14 +235,14 @@ anotaciones.
   `faster-whisper` con el modelo `large-v3-turbo`, cuantización `int8` en CPU, español fijo, glosario
   como contexto inicial y filtro de actividad de voz. Cualquier variante elegida debe cumplir los
   criterios de calidad de esta especificación.
-- La referencia de calidad es la salida con marcas de tiempo observada en
-  `Audio-Transcript-main/audioCorto.txt`, generada por el script local del directorio. Si la
-  comparación registrada por el usuario corresponde a otra variante del mismo directorio, se ajusta
-  en el plan sin cambiar los requisitos de calidad de esta especificación.
-- El glosario inicial es `Audio-Transcript-main/glosario-whisper.txt`; su contenido puede ampliarse
-  sin alterar el alcance funcional.
-- El conjunto de evaluación se compone del audio de referencia de 9 min 27 s y de los audios
-  sintéticos ya disponibles en `fixtures/`.
+- La referencia de calidad es la transcripción humana `tests_audio/transcripcion_audioCorto.txt`,
+  sin timestamps, para `Audio-Transcript-main/audioCorto.wav`.
+  `Audio-Transcript-main/audioCorto.txt` es un borrador del motor y no se usa como verdad.
+- El glosario inicial es `backend/app/transcription/glosario-whisper.txt`, saneado; su contenido puede
+  ampliarse sin alterar el alcance funcional.
+- El conjunto formal de evaluación se compone del audio de referencia de 9 min 27 s y de los audios
+  sintéticos ya disponibles en `fixtures/`. `tests_audio/audio_espanol.wav` se usa como contraste de
+  dominio, no como parte del conjunto formal.
 - El objetivo de rendimiento se mantiene en 15 minutos para 10 minutos de audio, igual que en la
   entrega anterior.
 

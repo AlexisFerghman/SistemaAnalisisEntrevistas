@@ -8,7 +8,8 @@ está destinada a entornos clínicos reales.
 - Frontend: React + JavaScript + Vite.
 - API: FastAPI + Python 3.12.
 - Persistencia: PostgreSQL 16 con `payload` `jsonb` en `current_session` y `current_export`.
-- Transcripción: `faster-whisper` con el modelo `base`, en CPU con `int8` y GPU cuando está disponible.
+- Transcripción: `faster-whisper` con el modelo `large-v3-turbo`, en CPU con `int8` y GPU con
+  `float16` cuando está disponible.
 - Orquestación: Docker Compose.
 
 ## Arranque
@@ -31,9 +32,51 @@ Servicios:
 
 ## Modelo de transcripción
 
-El contenedor `api` descarga el modelo `base` de `faster-whisper` **durante `docker build`** y lo deja
-en `HF_HOME=/opt/models`. En ejecución no necesita red: las redes `api_db` y `frontend_api` son
-internas. La primera transcripción reutiliza el modelo ya precargado; no se descarga nada al vuelo.
+El contenedor `api` descarga el modelo `large-v3-turbo` de `faster-whisper` **durante `docker build`** y
+lo deja en `HF_HOME=/opt/models`. El modelo pesa aproximadamente **1,6 GB**, por lo que la imagen y el
+build son más grandes que con el antiguo `base`. En ejecución no necesita red: las redes `api_db` y
+`frontend_api` son internas. La primera transcripción reutiliza el modelo ya precargado; no se descarga
+nada al vuelo.
+
+Configuración por defecto:
+
+- Idioma fijo `es`; no se detecta automáticamente.
+- `word_timestamps=True` para conservar marcas por palabra y por oración.
+- `vad_filter=True` para descartar silencios y reducir texto inventado.
+- Glosario del dominio en `backend/app/transcription/glosario-whisper.txt`, usado como
+  `initial_prompt`. El archivo está saneado: no contiene nombres de personas reales.
+- GPU `float16` con fallback a CPU `int8`.
+
+Variables de entorno:
+
+| Variable | Por defecto | Uso |
+|---|---|---|
+| `WHISPER_MODEL` | `large-v3-turbo` | Modelo; `base` solo para evaluación |
+| `WHISPER_GLOSSARY_PATH` | archivo incluido | Ruta alternativa al glosario |
+| `WHISPER_LOCAL_FILES_ONLY` | `1` | `1` impide descargas en ejecución |
+| `WHISPER_VAD_FILTER` | `1` | `0` desactiva el VAD solo para diagnóstico |
+| `HF_HOME` | `/opt/models` | Caché de pesos en la imagen |
+
+### Evaluación de calidad
+
+El script `backend/scripts/evaluate_transcription.py` calcula WER y aciertos de glosario sobre un audio
+sintético con una transcripción de referencia corregida manualmente:
+
+```bash
+docker compose exec -T api python scripts/evaluate_transcription.py \
+  --audio /data/audio/eval/audioCorto.wav \
+  --reference /data/audio/eval/audioCorto.reference.txt \
+  --model large-v3-turbo
+```
+
+Los resultados de la validación se registran en
+[`docs/validacion-004.md`](docs/validacion-004.md).
+
+> **Estado de validación**: sobre el audio clínico `Audio-Transcript-main/audioCorto.wav` con referencia
+> humana, `large-v3-turbo` reduce el WER un **44,17 %** frente a `base` (0,2648 vs 0,4744). En la escena
+> dialogada `tests_audio/audio_espanol.wav`, `base` obtiene un WER ligeramente mejor; se trata de un
+> dominio distinto y no invalida el resultado clínico. El modelo por defecto validado es
+> `large-v3-turbo`.
 
 ## Endpoints reales
 

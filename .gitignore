@@ -18,6 +18,7 @@ dist/
 # Audio de la sesión única y temporales de reemplazo
 data/audio/*
 !data/audio/.gitkeep
+data/audio/eval/
 
 # Fixtures de audio generados localmente (ver fixtures/audio/README.md)
 fixtures/audio/*.wav
@@ -25,3 +26,6 @@ fixtures/audio/*.mp3
 
 #archivos propios
 OPENCODE_COMMANDS.md
+Audio-Transcript-main/
+propuestas.md
+tests_audio/

@@ -48,6 +48,25 @@ def test_carga_valida_devuelve_sesion_lista(client, monkeypatch):
     assert (session_store.AUDIO_DIR / "current.wav").exists()
 
 
+def test_transcripcion_conserva_palabras_y_marcas_validas(client, monkeypatch):
+    monkeypatch.setenv("TRANSCRIPTION_ENGINE", "fake")
+
+    response = _post(client, content=wav_bytes(8.0))
+
+    assert response.status_code == 200
+    transcription = response.json()["session"]["transcription"]
+    assert transcription["language"] == "es"
+    assert transcription["provider"] == "fake"
+    assert transcription["segments"]
+
+    for segment in transcription["segments"]:
+        assert segment["start_time"] < segment["end_time"]
+        assert segment["words"], "el motor debe entregar marcas por palabra"
+        for word in segment["words"]:
+            assert segment["start_time"] <= word["start_time"] < word["end_time"]
+            assert word["end_time"] <= segment["end_time"]
+
+
 def test_formato_no_admitido_devuelve_415(client):
     response = _post(client, name="notas.txt", content=b"texto", mime="text/plain")
 

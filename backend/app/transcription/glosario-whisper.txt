@@ -1,0 +1,1 @@
+Lab Meeting IA, FONDECYT, SISMAULE, SHAP, WindowSHAP, TimeSHAP, BiGRU, LSTM, DAIC-WOZ, PHQ-8, MIMIC-IV, Length of Stay, CGM, Zotero, BibTeX, LaTeX, Spec-Driven Development, XAI, embeddings, borderline.
